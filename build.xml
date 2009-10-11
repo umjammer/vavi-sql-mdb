@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="Shift_JIS"?>
+
+<!-- ////////////////////////////////////////////////////////////////////// -->
+<!-- Copyright (c) 2004 by Naohide Sano, All rights reserved.               -->
+<!--                                                                        -->
+<!-- Written by Naohide Sano                                                -->
+<!--                                                                        -->
+<!-- Jet Engine                                                             -->
+<!--                                                                        -->
+<!-- @author	Naohide Sano                                                -->
+<!-- @version	0.00	040118	nsano	initial version                     -->
+<!--                                                                        -->
+<!-- ////////////////////////////////////////////////////////////////////// -->
+
+<project name="libmdb" default="run" basedir=".">
+
+  <property file="local.properties" />
+
+  <!-- クラスパスの定義 -->
+  <path id="project.class.path">
+    <pathelement location="build" />
+    <pathelement location="../.." />
+<!--
+    <fileset dir="lib">
+      <include name="*.jar" />
+    </fileset>
+-->
+  </path>
+
+  <!-- ターゲットの定義 -->
+
+  <!-- clean -->
+  <target name="clean" description="ビルド環境のクリア">
+    <delete dir="build" />
+  </target>
+
+  <!-- prepare -->
+  <target name="prepare" description="ビルド環境の準備">
+    <mkdir dir="build" />
+  </target>
+
+  <!-- javac vavi.util -->
+  <target name="compile.vavi.util" description="コンパイル vavi.util">
+    <ant dir="../../vavi/util" target="compile" />
+  </target>
+
+  <!-- javac -->
+  <target name="compile" depends="prepare,compile.vavi.util" description="コンパイル">
+    <javac debug="on" destdir="build" deprecation="on">
+      <classpath refid="project.class.path" />
+      <include name="**/*.java" />
+      <src path="src" />
+    </javac>
+  </target>
+
+  <!-- run -->
+  <target name="run" depends="compile" description="Test Program">
+    <java classname="vavi.apps.mdbtools.MdbFile" fork="yes">
+      <classpath refid="project.class.path" />
+      <arg value="${java.test.libmdb.run.mdb_in}" />
+      <arg value="${java.test.libmdb.run.table}" />
+    </java>
+  </target>
+
+</project>
+
+<!-- -->
