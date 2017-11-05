@@ -76,7 +76,7 @@ class Catalog {
     /** */
     public static List<Catalog> readCatalogs(MdbFile mdb, Type objectType) throws IOException {
 
-        List<Catalog> catalogs = new ArrayList<Catalog>();
+        List<Catalog> catalogs = new ArrayList<>();
 
         // dummy up a catalog entry so we may read the table def
         Catalog catalog = new Catalog(mdb, "MSysObjects", Type.TABLE, 2);

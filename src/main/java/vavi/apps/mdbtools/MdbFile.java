@@ -49,7 +49,7 @@ class MdbFile implements Cloneable {
     /** */
     private byte[] altPageBuffer = new byte[PAGE_SIZE];
     /** catalog of tables */
-    List<Catalog> catalogs = new ArrayList<Catalog>();
+    List<Catalog> catalogs = new ArrayList<>();
     /** */
     Statistics stats;
 
@@ -231,7 +231,7 @@ class MdbFile implements Cloneable {
                     // convert unicode to ascii, rather sloppily
                     text = new String(pageBuffer, offset, length, encoding);
                 } catch (UnsupportedEncodingException e) {
-                    throw (RuntimeException) new IllegalStateException().initCause(e);
+                    throw new IllegalStateException(e);
                 }
             }
         }
@@ -259,7 +259,7 @@ class MdbFile implements Cloneable {
         try {
             MdbFile newMdb = new MdbFile(filename);
             newMdb.stats = null;
-            newMdb.catalogs = new ArrayList<Catalog>();
+            newMdb.catalogs = new ArrayList<>();
             for (Catalog catalogEntry : catalogs) {
                 newMdb.catalogs.add(catalogEntry);
             }
@@ -267,7 +267,7 @@ class MdbFile implements Cloneable {
             referencesCount++;
             return newMdb;
         } catch (IOException e) {
-            throw (RuntimeException) new IllegalStateException().initCause(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -736,7 +736,7 @@ Debug.println("Physical Page Reads: " + stats.pg_reads);
     /** */
     public static void main(String[] args) throws IOException {
         MdbFile mdb = new MdbFile(args[0]);
-Debug.println(StringUtil.paramStringDeep(mdb));
+Debug.println(StringUtil.paramString(mdb));
 
         Table table = mdb.getTable(args[1]);
         for (Object[] values : table.fetchRows()) {

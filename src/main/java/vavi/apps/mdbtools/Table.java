@@ -117,9 +117,9 @@ class Table {
     private List<Column> readColumns() throws IOException {
 
         MdbFile mdb = catalogEntry.mdb;
-        List<Column> sortedColumns = new ArrayList<Column>();
+        List<Column> sortedColumns = new ArrayList<>();
         
-        columns = new ArrayList<Column>();
+        columns = new ArrayList<>();
 
         int currentColumnPosition = mdb.getStartColumnIndexOfTableOffset() + (numberOfRealIndices * mdb.getRealIndicesEntrySize());
 //Debug.println("currentColumnPosition: " + currentColumnPosition);
@@ -248,7 +248,7 @@ Debug.println("Unknown MDB version");
 
         MdbFile mdb = catalogEntry.mdb;
 
-        List<Object[]> rows = new ArrayList<Object[]>();
+        List<Object[]> rows = new ArrayList<>();
 
         if (numberOfRows == 0) {
             return rows;
@@ -557,7 +557,7 @@ Debug.println("deleted row: " + row);
         
         // FIX ME -- doesn't handle multipage table headers
         
-        indices = new ArrayList<Index>();
+        indices = new ArrayList<>();
         
         int currentPosition = startIndexIndex + 39 * numberOfRealIndices;
         

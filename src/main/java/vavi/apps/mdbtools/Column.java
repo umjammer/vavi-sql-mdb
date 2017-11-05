@@ -75,9 +75,9 @@ class Column {
     int size;
 
     /** */
-    List<Sarg> sargs = new ArrayList<Sarg>();
+    List<Sarg> sargs = new ArrayList<>();
     /** */
-    List<Sarg> indexSargCache = new ArrayList<Sarg>();
+    List<Sarg> indexSargCache = new ArrayList<>();
 
     /** */
     private boolean fixed;

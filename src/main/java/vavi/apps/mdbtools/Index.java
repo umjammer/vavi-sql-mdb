@@ -107,7 +107,7 @@ class Index {
             // If we have no cached index values for this column, 
             // create them.
             if (col.sargs.size() != 0 && col.indexSargCache != null) {
-                col.indexSargCache = new ArrayList<Sarg>();
+                col.indexSargCache = new ArrayList<>();
                 for (int j = 0; j < col.sargs.size(); j++) {
                     Sarg sarg = col.sargs.get(j);
                     Sarg idx_sarg = sarg;

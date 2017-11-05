@@ -29,7 +29,7 @@ import vavi.util.StringUtil;
 public abstract class Backend {
     
     /** */
-    private static Map<String, Backend> backends = new HashMap<String, Backend>();
+    private static Map<String, Backend> backends = new HashMap<>();
 
     /** */
     protected static String name;

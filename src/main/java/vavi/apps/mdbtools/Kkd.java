@@ -36,7 +36,7 @@ class Kkd {
     List<?> getColumnProperties(MdbFile mdb, int start) {
         Column prop = new Column();
         
-        this.props = new ArrayList<Column>();
+        this.props = new ArrayList<>();
         int len = mdb.readShort(start);
         int pos = start + 6;
         while (pos < start + len) {
@@ -52,7 +52,7 @@ class Kkd {
 
     /** */
     Map<?, ?> getColumnDefinitions(MdbFile mdb, int start) {
-        Map<?, ?> hash = new HashMap<Object, Object>();
+        Map<?, ?> hash = new HashMap<>();
         
 Debug.println("\n data");
 Debug.println("-------");
