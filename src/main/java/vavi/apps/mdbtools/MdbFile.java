@@ -28,7 +28,7 @@ import vavi.util.StringUtil;
 /**
  * Handle.
  * 
- * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 class MdbFile implements Cloneable {
@@ -402,7 +402,7 @@ Debug.dump(baos.toByteArray(), 0, 4);
             stats.pg_reads++;
         }
 
-        raFile.seek(offset);	// SEEK_SET
+        raFile.seek(offset);    // SEEK_SET
         int length = raFile.read(buffer, 0, getPageSize());
         if (length == -1) {
             throw new EOFException("unexpected EOF");

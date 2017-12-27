@@ -17,8 +17,8 @@ import vavi.util.Debug;
 
 /**
  * Column.
- * 
- * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
+ *
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 class Column {
@@ -96,7 +96,7 @@ class Column {
 
     /** */
     public boolean testSargs(MdbFile mdb, int offset, int len) {
-        
+
         for (int i = 0; i < sargs.size(); i++) {
             Sarg sarg = sargs.get(i);
             if (sarg.testSarg(mdb, this, offset, len) == 0) {
@@ -104,7 +104,7 @@ class Column {
                 return false;
             }
         }
-        
+
         return true;
     }
 

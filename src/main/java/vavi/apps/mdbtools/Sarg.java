@@ -13,7 +13,7 @@ package vavi.apps.mdbtools;
 /**
  * Sarg.
  * 
- * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 class Sarg {
@@ -27,7 +27,7 @@ class Sarg {
     static final int OP_ISNULL = 7;
     static final int OP_NOTNULL = 8;
 
-    int	op;
+    int    op;
     Object value;
 
     /** */

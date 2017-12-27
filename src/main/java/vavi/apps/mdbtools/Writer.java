@@ -16,8 +16,8 @@ import vavi.util.Debug;
 
 /**
  * Writer.
- * 
- * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
+ *
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 class Writer {
@@ -43,7 +43,7 @@ class Writer {
     /** */
     int writePage(MdbFile mdb, long page) throws IOException {
         int offset = (int) (page * mdb.getPageSize());
-        
+
         // is page beyond current size + 1 ?
         if (mdb.raFile.length() < offset + mdb.getPageSize()) {
             throw new IllegalArgumentException("offset " + offset + " is beyond EOF");
@@ -58,7 +58,7 @@ class Writer {
         Catalog entry = table.catalogEntry;
         MdbFile mdb = entry.mdb;
         int numberOfColumns = mdb.getNumberOfColumns(startRowIndex);
-        
+
         int totcols = 0;
         int variableColumns = 0; // mdb.pageBuffer[row_end-1];
         int fixedColumns = 0; // numberOfColumns - variableColumns;
@@ -79,10 +79,10 @@ class Writer {
                 fields[totcols++].isFixed = false;
             }
         }
-        
+
         int bitmaskSize = (numberOfColumns - 1) / 8 + 1;
         int nullMask = endRowIndex - bitmaskSize + 1;
-        
+
         for (int i = 0; i < numberOfColumns; i++) {
             int byteNumber = i / 8;
             int bitNumber = i % 8;
@@ -90,7 +90,7 @@ class Writer {
             fields[i].isNull = (mdb.readByte(nullMask + byteNumber) & (1 << bitNumber)) != 0 ? false : true;
 //Debug.println("col " + i + " is " + (fields[i].is_null ? "null" : "not null"));
         }
-        
+
         int eod, len; // end of data
 
         // find the end of data pointer
@@ -100,12 +100,12 @@ class Writer {
             eod = mdb.readByte(endRowIndex - 1 - variableColumns - bitmaskSize);
         }
 //Debug.println("eod is " +  eod);
-        
+
         int col_start = mdb.getStartColumnNumber();
         // actual cols on this row
         int fixed_cols_found = 0;
         int var_cols_found = 0;
-        
+
         int next_col;
         int var_entry_pos;
         totcols = 0;
@@ -154,7 +154,7 @@ class Writer {
                 col_start += len;
             }
         }
-        
+
         return numberOfColumns;
     }
 
@@ -165,7 +165,7 @@ class Writer {
     int packRow(Table table, byte[] row_buffer, int num_fields, Field[] fields) {
         int pos = 0;
         int var_cols = 0;
-        
+
         row_buffer[pos++] = (byte) num_fields;
         for (int i = 0; i < num_fields; i++) {
             if (fields[i].isFixed) {
@@ -182,16 +182,16 @@ class Writer {
                 pos += fields[i].size;
             }
         }
-        
+
         // EOD
         row_buffer[pos++] = (byte) pos;
-        
+
         for (int i = num_fields - 1; i >= num_fields - var_cols; i--) {
             row_buffer[pos++] = (byte) (fields[i].offset % 256);
         }
-        
+
         row_buffer[pos++] = (byte) var_cols;
-        
+
         char byte_ = 0;
         char bit = 0;
         for (int i = 0; i < num_fields; i++) {
@@ -212,7 +212,7 @@ Debug.println(i + " " + bit + " " + (1 << bit) + " " + byte_);
         if (bit != 0) {
             row_buffer[pos++] = (byte) byte_;
         }
-        
+
         return pos;
     }
 
@@ -220,12 +220,12 @@ Debug.println(i + " " + bit + " " + (1 << bit) + " " + byte_);
     int getFreespaceOfPage(MdbFile mdb) {
 
         int rows, free_start, free_end;
-        
+
         rows = mdb.readShort(mdb.getRowCountOffset());
         free_start = mdb.getRowCountOffset() + 2 + (rows * 2);
         free_end = mdb.readShort((mdb.getRowCountOffset() + rows * 2)) - 1;
 Debug.println("free space left on page = " + (free_end - free_start));
-        
+
         return (free_end - free_start + 1);
     }
 
@@ -236,7 +236,7 @@ Debug.println("free space left on page = " + (free_end - free_start));
         MdbFile mdb = entry.mdb;
         Field[] fields = new Field[256];
         byte[] row_buffer = new byte[4096];
-        
+
         if (!mdb.writable) {
 Debug.println("File is not open for writing");
             return 0;
@@ -244,12 +244,12 @@ Debug.println("File is not open for writing");
         int row_start = mdb.readShort((mdb.getRowCountOffset() + 2) + ((table.currentRow - 1) * 2));
         int row_end = mdb.findEndRowIndex(table.currentRow - 1);
         int old_row_size = row_end - row_start;
-        
+
         row_start &= 0x0fff; // remove flags
-        
+
 Debug.println("page " + table.currentPhysicalPage + " row " + (table.currentRow - 1) + " start " + row_start + " end " + row_end);
 Debug.dump(mdb.getPageBuffer(), row_start, row_end);
-        
+
         Object[] values = table.fetchRows().get(table.currentRow - 1);
         for (int i = 0; i < table.numberOfColumns; i++) {
             if (values[i] != null && table.isColumnIndexed(i)) {
@@ -258,7 +258,7 @@ Debug.println("Attempting to update column that is part of an index");
             }
         }
         int num_fields = crackRow(table, row_start, row_end, fields);
-        
+
 for (int i = 0; i < num_fields; i++) {
  Debug.println("col " + i + " " + fields[i].column + " start " + fields[i].start + " size " + fields[i].size);
 }
@@ -270,7 +270,7 @@ Debug.println("yes");
                 fields[i].size = column.getLengthOfValue(values[i]);
             }
         }
-        
+
         int new_row_size = packRow(table, row_buffer, num_fields, fields);
 
 Debug.dump(row_buffer, 0, new_row_size - 1);
@@ -289,22 +289,22 @@ Debug.println("No space left on this page, update will not occur");
     int replaceRow(Table table, int row, byte[] new_row, int new_row_size) throws IOException {
         Catalog entry = table.catalogEntry;
         MdbFile mdb = entry.mdb;
-        
+
 Debug.dump(mdb.getPageBuffer(), 39);
 Debug.dump(mdb.getPageBuffer(), mdb.getPageSize() - 160, mdb.getPageSize() - 1);
 Debug.println("updating row " + row + " on page " + table.currentPhysicalPage);
-        
+
         byte[] new_pg = new byte[mdb.getPageSize()];
-        
+
         new_pg[0] = 0x01;
         new_pg[1] = 0x01;
         _mdb_put_int32(new_pg, 4, (int) entry.tablePage);
-        
+
         int num_rows = mdb.readShort(mdb.getRowCountOffset());
         _mdb_put_int16(new_pg, mdb.getRowCountOffset(), num_rows);
-        
+
         int pos = mdb.getPageSize();
-        
+
         // rows before
         for (int i = 0;i < row; i++) {
             int row_start = mdb.readShort((mdb.getRowCountOffset() + 2) + (i * 2));
@@ -314,12 +314,12 @@ Debug.println("updating row " + row + " on page " + table.currentPhysicalPage);
             System.arraycopy(mdb.getPageBuffer(), row_start, new_pg, pos, row_size);
             _mdb_put_int16(new_pg, (mdb.getRowCountOffset() + 2) + (i * 2), pos);
         }
-        
+
         // our row
         pos -= new_row_size;
         System.arraycopy(new_row, 0, new_pg, pos, new_row_size);
         _mdb_put_int16(new_pg, (mdb.getRowCountOffset() + 2) + (row * 2), pos);
-        
+
         // rows after
         for (int i = row + 1; i < num_rows; i++) {
             int row_start = mdb.readShort((mdb.getRowCountOffset() + 2) + (i * 2));
@@ -329,12 +329,12 @@ Debug.println("updating row " + row + " on page " + table.currentPhysicalPage);
             System.arraycopy(mdb.getPageBuffer(), row_start, new_pg, pos, row_size);
             _mdb_put_int16(new_pg, (mdb.getRowCountOffset() + 2) + (i * 2), pos);
         }
-        
+
         // almost done, copy page over current
         System.arraycopy(new_pg, 0, mdb.getPageBuffer(), 0, mdb.getPageSize());
-        
+
         _mdb_put_int16(mdb.getPageBuffer(), 2, getFreespaceOfPage(mdb));
-        
+
 Debug.dump(mdb.getPageBuffer(), 39);
 Debug.dump(mdb.getPageBuffer(), mdb.getPageSize() - 160, mdb.getPageSize() - 1);
 

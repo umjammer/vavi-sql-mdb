@@ -13,7 +13,7 @@ package vavi.apps.mdbtools;
 /**
  * IndexPage.
  * 
- * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 class IndexPage {
@@ -26,7 +26,7 @@ class IndexPage {
     static final int PAGE_MAP = 5;
 
     int page;
-    int mask_pos;	
+    int mask_pos;    
     int mask_byte;
     int mask_bit;
     int offset;

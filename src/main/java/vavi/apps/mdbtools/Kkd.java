@@ -21,8 +21,8 @@ import vavi.util.StringUtil;
 /**
  * Note: This code is mostly garbage right now...just a test to parse out the
  * KKD structures.
- * 
- * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
+ *
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 class Kkd {
@@ -35,7 +35,7 @@ class Kkd {
     /** */
     List<?> getColumnProperties(MdbFile mdb, int start) {
         Column prop = new Column();
-        
+
         this.props = new ArrayList<>();
         int len = mdb.readShort(start);
         int pos = start + 6;
@@ -53,7 +53,7 @@ class Kkd {
     /** */
     Map<?, ?> getColumnDefinitions(MdbFile mdb, int start) {
         Map<?, ?> hash = new HashMap<>();
-        
+
 Debug.println("\n data");
 Debug.println("-------");
         int len = mdb.readShort(start);
@@ -94,7 +94,7 @@ Debug.println(" Property " + prop.name);
     void dump(MdbFile mdb) throws IOException {
         int datapos = 0;
         int rowId = this.kkd_rowid;
-        
+
         mdb.readPage(this.kkd_pg);
         int rows = mdb.readShort(8);
 Debug.println("number of rows = " + rows);
@@ -129,7 +129,7 @@ Debug.println(i++ + " " + prop.name);
             }
             pos += tmp;
         }
-        
+
         if (datapos != 0) {
             getColumnDefinitions(mdb, datapos);
         }

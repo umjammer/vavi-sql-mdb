@@ -12,8 +12,8 @@ package vavi.apps.mdbtools;
 /**
  * these routines are copied from the freetds project which does something very
  * similar
- * 
- * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
+ *
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 050408 nsano ported from mdbtool <br>
  */
 public class Currency {
