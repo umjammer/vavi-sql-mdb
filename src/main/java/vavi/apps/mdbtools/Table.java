@@ -18,6 +18,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.logging.Level;
 
 import vavi.apps.mdbtools.Column.Type;
 import vavi.util.Debug;
@@ -30,7 +32,7 @@ import vavi.util.StringUtil;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
-class Table {
+public class Table {
 
     /** */
     Catalog catalogEntry;
@@ -65,11 +67,13 @@ class Table {
     /** */
     byte[] usageMap;
     /** */
+    byte[] freeUsageMap;
+    /** */
     int basePageIndexMap;
     /** */
     int indexMapSize;
     /** */
-    byte[] idx_usage_map;
+    byte[] indexUsageMap;
 
     /** */
     private Comparator<Column> columnComparator = new Comparator<Column>() {
@@ -87,25 +91,33 @@ class Table {
         MdbFile mdb = catalogEntry.mdb;
 
         mdb.readPage(catalogEntry.tablePage);
+        if (mdb.getPageBuffer()[0] != 0x02) {
+            throw new IllegalStateException("not a valid table def page: " + catalogEntry.tablePage);
+        }
         int length = mdb.readShort(8);
 //Debug.println("length: " + length);
         this.numberOfRows = mdb.readInt(mdb.getNumberOfRowsOfTableOffset());
+        int num_var_cols = mdb.readShort(mdb.getNumberOfColumnsOfTableOffset() - 2);
         this.numberOfColumns = mdb.readShort(mdb.getNumberOfColumnsOfTableOffset());
         this.numberOfIndices = mdb.readInt(mdb.getNumberOfIndicesOfTableOffset());
         this.numberOfRealIndices = mdb.readInt(mdb.getNumberOfRealIndicesOfTableOffset());
 
         // grab a copy of the usage map
-        int rowNumber = mdb.readByte(mdb.getUsageMapOfTableOffset());
-        mdb.readAltPage(mdb.read24Bit(mdb.getUsageMapOfTableOffset() + 1));
-        mdb.swapPageBuffer();
-        int startRow = mdb.readShort((mdb.getRowCountOffset() + 2) + (rowNumber * 2));
-        int endRow = mdb.findEndRowIndex(rowNumber);
-        this.usageMap = new byte[endRow - startRow + 1];
-        System.arraycopy(mdb.getPageBuffer(), startRow, usageMap, 0, usageMap.length);
+        int rowNumber = mdb.readInt(mdb.getTableUsageMapOffset());
+        int[] startRow = new int[1];
+        int[] mapSize = new int[1];
+        byte[] buf = mdb.find_pg_row(rowNumber, startRow, mapSize);
+//Debug.println("mapSize: " + mapSize[0]);
+        this.usageMap = new byte[mapSize[0]];
+        System.arraycopy(buf, startRow[0], usageMap, 0, usageMap.length);
 //Debug.println("usageMap: " + (endRow - startRow) + " bytes\n" + StringUtil.getDump(mdb.getPageBuffer(), startRow, endRow - startRow));
-        // swap back
-        mdb.swapPageBuffer();
 //Debug.println("usage map found on page " + mdb.read24Bit(mdb.getUsageMapOfTableOffset() + 1) + " start " + StringUtil.toHex4(startRow) + " end " + StringUtil.toHex4(endRow));
+
+        // grab a copy of the free space page map
+        rowNumber = mdb.readInt(mdb.getTableFreeMapOffset());
+        buf = mdb.find_pg_row(rowNumber, startRow, mapSize);
+        this.freeUsageMap = new byte[mapSize[0]];
+        System.arraycopy(buf, startRow[0], freeUsageMap, 0, freeUsageMap.length);
 
         this.firstDataPage = mdb.readShort(mdb.getFirstDataPageOfTableOffset());
 
@@ -121,7 +133,9 @@ class Table {
 
         columns = new ArrayList<>();
 
-        int currentColumnPosition = mdb.getStartColumnIndexOfTableOffset() + (numberOfRealIndices * mdb.getRealIndicesEntrySize());
+        byte[] buf = new byte[mdb.getTableColumnEntrySize()];
+
+        int currentPosition = mdb.getTableColumnStartOffset() + (numberOfRealIndices * mdb.getTableRealIndicesEntrySize());
 //Debug.println("currentColumnPosition: " + currentColumnPosition);
 
         // new code based on patch submitted by Tim Nelson 2000.09.27
@@ -130,38 +144,39 @@ class Table {
         for (int i = 0; i < numberOfColumns; i++) {
 //Debug.println("column " + i);
 //dumpData(mdb.pageBuffer, cur_col ,cur_col + 18);
+            currentPosition = read_pg_if_n(mdb, buf, currentPosition, mdb.getTableColumnEntrySize());
             Column column = new Column();
-            column.number = mdb.readByte(currentColumnPosition + mdb.getNumberOfColumnOffset());
 
-            currentColumnPosition = mdb.readPage_if(currentColumnPosition, 0);
-            column.type = Column.Type.valueOf(mdb.readByte(currentColumnPosition));
+            column.type = Column.Type.valueOf(buf[0]);
+
+            column.number = buf[mdb.getColumnNumberOffset()];
+
+            column.varColNum = mdb.read16Bit(buf, mdb.getTableColumnOffsetVar());
+
+            column.rowColNum = mdb.read16Bit(buf, mdb.getTableRowColumnNumberOffset());
 
             if (column.type == Column.Type.NUMERIC) {
-                column.precision = mdb.readByte(currentColumnPosition + 11);
-                column.scale = mdb.readByte(currentColumnPosition + 12);
+                column.precision = buf[11];
+                column.scale = buf[12];
             }
 
-            currentColumnPosition = mdb.readPage_if(currentColumnPosition, 13);
-            column.setFixed((mdb.readByte(currentColumnPosition + mdb.getFixedSizeOfColumnOffset()) & 0x01) != 0);
+            column.setFixed((buf[mdb.getColumnFlagsOffset()] & 0x01) != 0);
+            column.longAuto = (buf[mdb.getColumnFlagsOffset()] & 0x04) != 0;
+            column.uuidAuto = (buf[mdb.getColumnFlagsOffset()] & 0x40) != 0;
+
+            column.fixedOffset = mdb.read16Bit(buf, mdb.getColumnSizeOffset());
+
             if (column.type != Column.Type.BOOL) {
-                currentColumnPosition = mdb.readPage_if(currentColumnPosition, 17);
-                int lowByte = mdb.readByte(currentColumnPosition + mdb.getSizeOfColumnOffset());
-                currentColumnPosition = mdb.readPage_if(currentColumnPosition, 18);
-                int highByte = mdb.readByte(currentColumnPosition + mdb.getSizeOfColumnOffset() + 1);
-                column.size += (highByte << 8) | lowByte;
+                column.size = mdb.read16Bit(buf, mdb.getColumnSizeOffset());
             } else {
                 column.size = 0;
             }
 
             sortedColumns.add(column);
-            currentColumnPosition += mdb.getColumnEntrySizeOfTable();
 //Debug.println("column[" + i + "]: " + StringUtil.paramString(column));
         }
 
-        int currentNamePosition = currentColumnPosition;
-//Debug.println("currentNamePosition: " + currentNamePosition);
-
-        Collections.sort(sortedColumns, columnComparator);
+//Debug.println("currentPosition: " + currentPosition);
 
         // column names
         for (int i = 0; i < numberOfColumns; i++) {
@@ -169,73 +184,42 @@ class Table {
             Column column = sortedColumns.get(i);
 
             // we have reached the end of page
-            currentNamePosition = mdb.readPage_if(currentNamePosition, 0);
-            int nameSize = mdb.readByte(currentNamePosition);
-
-            if (mdb.isJet4()) {
-                // FIX ME - for now just skip the high order byte
-                currentNamePosition += 2;
-                // determine amount of name on this page
-                int length = ((currentNamePosition + nameSize) > mdb.getPageSize()) ?
-                    mdb.getPageSize() - currentNamePosition :
-                    nameSize;
-
-                // strip high order (second) byte from unicode string
-                column.name = new String(mdb.getPageBuffer(), currentNamePosition, length, MdbFile.encoding);
-                // name wrapped over page
-                if (length < nameSize) {
-                    // read the next page
-                    mdb.readPage(mdb.readInt(4));
-                    currentNamePosition = 8 - (mdb.getPageSize() - currentNamePosition);
-                    // get the rest of the name
-                    column.name += new String(mdb.getPageBuffer(), currentNamePosition, nameSize - length, MdbFile.encoding);
-                }
-
-                currentNamePosition += nameSize;
-            } else if (mdb.isJet3()) {
-                // determine amount of name on this page
-                int length = ((currentNamePosition + nameSize) > mdb.getPageSize()) ?
-                    mdb.getPageSize() - currentNamePosition :
-                    nameSize;
-
-                if (length != 0) {
-                    column.name = new String(mdb.getPageBuffer(), currentNamePosition + 1, length);
-                }
-                // name wrapped over page
-                if (length < nameSize) {
-                    // read the next pg
-                    mdb.readPage(mdb.readInt(4));
-                    currentNamePosition = 8 - (mdb.getPageSize() - currentNamePosition);
-                    // get the rest of the name
-                    column.name = new String(mdb.getPageBuffer(), currentNamePosition, nameSize - length);
-                }
-
-                currentNamePosition += nameSize + 1;
+            int nameSize;
+            if (mdb.isJet3()) {
+                nameSize = read_pg_if_8(mdb, currentPosition);
+                currentPosition++;
             } else {
-Debug.println("Unknown MDB version");
+                nameSize = read_pg_if_16(mdb, currentPosition);
+                currentPosition += 2;
             }
+            byte[] tmpbuf = new byte[nameSize];
+            currentPosition = read_pg_if_n(mdb, tmpbuf, currentPosition, nameSize);
+            column.name = mdb.getJetString(tmpbuf, 0, nameSize);
 //Debug.println("column[" + i + "]: " + StringUtil.paramString(column));
         }
 
-        startIndexIndex = currentNamePosition;
+        Collections.sort(sortedColumns, columnComparator);
+
+        startIndexIndex = currentPosition;
 //Debug.println("startIndexIndex " + startIndexIndex);
         return sortedColumns;
     }
 
     //---- sarg
 
-    /** */
-    int add_sarg_by_name(String columnName, Sarg sarg) {
+    /**
+     * @throws NoSuchElementException
+     */
+    void addSargByName(String columnName, Sarg sarg) {
 
         for (int i = 0;i < columns.size();i++) {
             Column column = columns.get(i);
             if (column.name.equals(columnName)) {
                 column.addSarg(sarg);
-                return 1;
             }
         }
         // else didn't find the column return 0!
-        return 0;
+        throw new NoSuchElementException(columnName);
     }
 
     //---- data
@@ -259,21 +243,21 @@ Debug.println("Unknown MDB version");
             currentPageNumber = 1;
             currentRow = 0;
             if (readNextDPage() == 0) {
-Debug.println("no page read");
+Debug.println(Level.FINE, name + ": no page read");
                 return rows;
             }
         }
 
         while (true) {
             int rowCount = mdb.readShort(mdb.getRowCountOffset());
-//Debug.println("page: " + currntPageNumber + ", physicalPage: " + currentPhysicalPage + ", row: " + currentRow + " / " + rowCount);
+//Debug.println(name + ": " + "page: " + currentPageNumber + ", physicalPage: " + currentPhysicalPage + ", row: " + currentRow + " / " + rowCount);
 
             // if at end of page, find a new page
             if (currentRow >= rowCount) {
                 currentRow = 0;
 
                 if (readNextDPage() == 0) {
-Debug.println("no more page");
+Debug.println(Level.FINE, name + ": no more page");
                     break;
                 }
             }
@@ -322,7 +306,7 @@ Debug.println("column " + (j + 1) + " is " + values[j]);
 //Debug.println("here 0: " + doNotSkipDeleted);
 
         if (!doNotSkipDeleted && deleteFlag) {
-Debug.println("deleted row: " + row);
+Debug.println(Level.FINE, "deleted row: " + row);
             endRowIndex = startRowIndex - 1;
             return null;
         }
@@ -368,8 +352,8 @@ Debug.println("deleted row: " + row);
         for (int j = 0; j < numberOfColumns; j++) {
             Column column = columns.get(j);
             if (column.isFixed() && (++foundFixedColumns <= fixedColumns)) {
-//if (col.name.equals("Type")) {
-// Debug.println("column Type, startColumn " + startColumn + " startRowIndex " + startRowIndex + " data " + mdb.pg_buf[startRowIndex + startColumn] + " " + mdb.pg_buf[startRowIndex + startColumn + 1]);
+//if (column.name.equals("Type")) {
+// Debug.println("column Type, startColumn " + startColumnIndex + " startRowIndex " + startRowIndex + " data " + mdb.getPageBuffer()[startRowIndex + startColumnIndex] + " " + mdb.getPageBuffer()[startRowIndex + startColumnIndex + 1]);
 //}
                 boolean isNull = isNull(nullMask, j + 1);
                 values[j] = getValueOfColumn(mdb, column, isNull, startRowIndex + startColumnIndex, column.size);
@@ -537,7 +521,7 @@ Debug.println("deleted row: " + row);
     /**
      * @return 0 means "not found"
      */
-    public int readNextDPage() throws IOException {
+    int readNextDPage() throws IOException {
 
         int mapType = usageMap[0];
         if (mapType == 0) {
@@ -549,74 +533,198 @@ Debug.println("deleted row: " + row);
         }
     }
 
+    /**
+     * Read data into a buffer, advancing pages and setting the
+     * page cursor as needed. In the case that buf in NULL, pages
+     * are still advanced and the page cursor is still updated.
+     */
+    int read_pg_if_n(MdbFile mdb, byte[] buf, int cur_pos, int len) throws IOException {
+
+        /* Advance to page which contains the first byte */
+        while (cur_pos >= mdb.getPageSize()) {
+            mdb.readPage(mdb.read32Bit(mdb.getPageBuffer(), 4));
+            cur_pos -= (mdb.getPageSize() - 8);
+        }
+        /* Copy pages into buffer */
+        int bp = 0;
+        while (cur_pos + len >= mdb.getPageSize()) {
+            int piece_len = mdb.getPageSize() - cur_pos;
+            if (buf != null) {
+                System.arraycopy(mdb.getPageBuffer(), cur_pos, buf, bp, piece_len);
+                bp += piece_len;
+            }
+            len -= piece_len;
+            mdb.readPage(mdb.read32Bit(mdb.getPageBuffer(), 4));
+            cur_pos = 8;
+        }
+        /* Copy into buffer from final page */
+        if (len != 0 && buf != null) {
+            System.arraycopy(mdb.getPageBuffer(), cur_pos, buf, 0, len);
+        }
+        cur_pos += len;
+        return cur_pos;
+    }
+
+    int read_pg_if_32(MdbFile mdb, int cur_pos) throws IOException {
+        byte[] c = new byte[4];
+
+        read_pg_if_n(mdb, c, cur_pos, 4);
+        return mdb.read32Bit(c, 0);
+    }
+
+    int read_pg_if_16(MdbFile mdb, int cur_pos) throws IOException {
+        byte[] c = new byte[2];
+
+        read_pg_if_n(mdb, c, cur_pos, 2);
+        return mdb.read16Bit(c, 0);
+    }
+
+    int read_pg_if_8(MdbFile mdb, int cur_pos) throws IOException {
+        byte[] c = new byte[1];
+
+        read_pg_if_n(mdb, c, cur_pos, 1);
+        return c[0];
+    }
+
     /** */
-    public List<?> readIndices() {
+    List<?> readIndices() throws IOException {
         MdbFile mdb = catalogEntry.mdb;
         int indexNumber, keyNumber, columnNumber;
         int nameSize;
+        int indexStartPage = mdb.currentPage;
 
         // FIX ME -- doesn't handle multipage table headers
 
         indices = new ArrayList<>();
 
-        int currentPosition = startIndexIndex + 39 * numberOfRealIndices;
+        int index2size;
+        int typeOffset;
+        int currentPosition;
+        if (mdb.isJet3()) {
+            currentPosition = startIndexIndex + 39 * numberOfRealIndices;
+            index2size = 20;
+            typeOffset = 19;
+        } else {
+            currentPosition = startIndexIndex + 52 * numberOfRealIndices;
+            index2size = 28;
+            typeOffset = 23;
+        }
 
+        // Read in the definitions of table indexes, into table->indices
+
+        // num_real_idxs should be the number of indexes other than type 2.
+        // It's not always the case. Happens on Northwind Orders table.
+
+        byte[] tmpbuf = new byte[index2size];
         for (int i = 0; i < numberOfIndices; i++) {
+            currentPosition = read_pg_if_n(mdb, tmpbuf, currentPosition, index2size);
             Index index = new Index();
             index.table = this;
-            index.indexNumber = mdb.readShort(currentPosition);
-            currentPosition += 19;
-            index.indexType = mdb.readByte(currentPosition++);
+            index.indexNumber = mdb.read16Bit(tmpbuf, 4);
+            index.indexType = tmpbuf[typeOffset];
             indices.add(index);
+            if (index.indexType != 2) {
+                numberOfRealIndices++;
+            }
         }
 
+        // Pick up the names of each index
         for (int i = 0; i < numberOfIndices; i++) {
             Index pIndex = indices.get(i);
-            nameSize = mdb.readByte(currentPosition++);
-            pIndex.name = new String(mdb.getPageBuffer(), currentPosition, nameSize);
+            if (mdb.isJet3()) {
+                nameSize = read_pg_if_8(mdb, currentPosition);
+                currentPosition++;
+            } else {
+                nameSize = read_pg_if_16(mdb, currentPosition);
+                currentPosition += 2;
+            }
+            tmpbuf = new byte[nameSize];
+            currentPosition = read_pg_if_n(mdb, tmpbuf, currentPosition, nameSize);
+            pIndex.name = mdb.getJetString(tmpbuf, 0, nameSize);
 //Debug.println("index name " + pIndex.name);
-            currentPosition += nameSize;
         }
 
+        // Pick up the column definitions for normal/primary key indexes
+        // NOTE: Match should possibly be by index_col_def_num, rather
+        // than index_num; but in files encountered both seem to be the
+        // same (so left with index_num until a counter example is found).
+        mdb.readAltPage(catalogEntry.tablePage);
+        mdb.readPage(indexStartPage);
         currentPosition = startIndexIndex;
         indexNumber = 0;
         for (int i = 0; i < numberOfRealIndices; i++) {
+            if (!mdb.isJet3()) {
+                currentPosition += 4;
+            }
             Index index = null;
-            do {
-                index = indices.get(indexNumber++);
-            } while (index != null && index.indexType == 2);
+            int j;
+            for (j = 0; j < numberOfIndices; j++) {
+                index = indices.get(j);
+                if (index.indexType != 2 && index.indexNumber == i) {
+                    break;
+                }
+            }
+            if (j == numberOfIndices) {
+                continue;
+            }
 
             // if there are more real indexes than index entries left after
-            // removing type 2's decrement real indexes and continue.  Happens
+            // removing type 2's decrement real indexes and continue. Happens
             // on Northwind Orders table.
             if (index == null) {
                 numberOfRealIndices--;
                 continue;
             }
 
-            index.numberOfRows = mdb.readInt(43 + (i * 8));
+            index.numberOfRows = mdb.read32Bit(mdb.getAltPageBuffer(),
+                mdb.getTableColumnStartOffset() + (index.indexNumber * mdb.getTableRealIndicesEntrySize()));
 
             keyNumber = 0;
-            for (int j = 0; j < Index.MAX_IDX_COLS; j++) {
+            for (j = 0; j < Index.MAX_IDX_COLS; j++) {
                 columnNumber = mdb.readShort(currentPosition);
                 currentPosition += 2;
                 if (columnNumber != 0xffff) {
-                    // set column number to a 1 based column number and store
-                    index.key_col_num[keyNumber] = columnNumber + 1;
-                    if (mdb.readByte(currentPosition) != 0) {
-                        index.key_col_order[keyNumber] = Index.Order.ASC;
-                    } else {
-                        index.key_col_order[keyNumber] = Index.Order.DESC;
-                    }
-                    keyNumber++;
+                    currentPosition++;
+                    continue;
                 }
-                currentPosition++;
+                // here we have the internal column number that does not
+                // always match the table columns because of deletions
+                int cleaned_col_num = -1;
+                for (int k = 0; k < numberOfColumns; k++) {
+                    Column col = columns.get(k);
+                    if (col.number == columnNumber) {
+                        cleaned_col_num = k;
+                        break;
+                    }
+                }
+                if (cleaned_col_num == -1) {
+                    System.err.printf("CRITICAL: can't find column with internal id %d in index %s\n", columnNumber, index.name);
+                    currentPosition++;
+                    continue;
+                }
+
+                // set column number to a 1 based column number and store
+                index.key_col_num[keyNumber] = cleaned_col_num + 1;
+                if (mdb.readByte(currentPosition) != 0) {
+                    index.key_col_order[keyNumber] = Index.Order.ASC;
+                } else {
+                    index.key_col_order[keyNumber] = Index.Order.DESC;
+                }
+                keyNumber++;
             }
             index.numberOfKeys = keyNumber;
             currentPosition += 4;
-            index.firstPage = mdb.readInt(currentPosition);
+            index.firstPage = read_pg_if_32(mdb, currentPosition);
             currentPosition += 4;
-            index.flags = mdb.readByte(currentPosition++);
+
+            if (!mdb.isJet3()) {
+                currentPosition += 4;
+            }
+
+            index.flags = read_pg_if_8(mdb, currentPosition++);
+            if (!mdb.isJet3()) {
+                currentPosition += 5;
+            }
         }
 
         return indices;
@@ -645,11 +753,11 @@ Debug.println("deleted row: " + row);
     private Object getValue(MdbFile mdb, int start, Column column, int length)
         throws IOException {
 
-//if ("Name".equals(col.name)) {
-// Debug.println("start " + start + " " + len);
+//if ("Name".equals(column.name)) {
+// Debug.println("start " + start + " " + length);
 //}
         if (length != 0) {
-//Debug.println("len " + len + " size " + col.col_size);
+//Debug.println("len " + length + " size " + column.size);
             if (column.type == Column.Type.NUMERIC) {
                 return getNumericValue(mdb, start, column.type, column.precision, column.scale);
             } else {
@@ -693,7 +801,7 @@ Debug.println("deleted row: " + row);
 
             if (mdb.readAltPage(lval_pg) != mdb.getPageSize()) {
                 // Failed to read
-Debug.println("Reading LVAL page failed");
+Debug.println(Level.WARNING, "Reading LVAL page failed");
                 return null;
             }
             // swap the alt and regular page buffers, so we can call get_int16
@@ -715,13 +823,14 @@ Debug.println("Reading LVAL page failed");
         } else if (oleFlags == 0x0000) {
             int ole_row = mdb.readByte(start + 4);
             int lval_pg = mdb.read24Bit(start + 5);
-//Debug.println("Reading LVAL page " + lval_pg);
+//Debug.println(String.format("0Reading LVAL page %08x", lval_pg));
             // swap the alt and regular page buffers, so we can call get_int16
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             mdb.swapPageBuffer();
             int cur = 0;
             do {
                 if (mdb.readPage(lval_pg) != mdb.getPageSize()) {
+//Debug.println(Level.WARNING, "Failed to read: lval_pg: " + lval_pg);
                     // Failed to read
                     return null;
                 }
@@ -736,12 +845,13 @@ Debug.println("Reading LVAL page failed");
                 // find next lval page
                 ole_row = mdb.readByte(row_start);
                 lval_pg = mdb.read24Bit(row_start + 1);
+//Debug.println(String.format("nReading LVAL page %08x", lval_pg));
             } while (lval_pg != 0);
             // make sure to swap page back
             mdb.swapPageBuffer();
             return baos.toByteArray();
         } else {
-Debug.println("Unhandled ole field flags: " + StringUtil.toHex4(oleFlags));
+Debug.println(Level.WARNING, "Unhandled ole field flags: " + StringUtil.toHex4(oleFlags));
             return null;
         }
     }
@@ -767,7 +877,7 @@ Debug.println("Unhandled ole field flags: " + StringUtil.toHex4(oleFlags));
         if ((memoFlags & 0x8000) != 0) {
             // inline memo field
 //Debug.dump(mdb.getPageBuffer(), start + MEMO_OVERHEAD, size - MEMO_OVERHEAD);
-            String text = mdb.getJetString(start + MEMO_OVERHEAD, size - MEMO_OVERHEAD);
+            String text = mdb.getJetString(mdb.getPageBuffer(), start + MEMO_OVERHEAD, size - MEMO_OVERHEAD);
 //Debug.println("0x" + StringUtil.toHex4(memoFlags) + ": " + text);
             return text;
         } else if ((memoFlags & 0x4000) != 0) {
@@ -779,7 +889,7 @@ Debug.println("Unhandled ole field flags: " + StringUtil.toHex4(oleFlags));
 //Debug.println("Reading LVAL page " + lval_pg);
 
             if (mdb.readAltPage(lval_pg) != mdb.getPageSize()) {
-Debug.println("failed to read page: " + lval_pg);
+Debug.println(Level.WARNING, "failed to read page: " + lval_pg);
                 return null;
             }
             // swap the alt and regular page buffers, so we can call get_int16
@@ -789,7 +899,7 @@ Debug.println("failed to read page: " + lval_pg);
 //Debug.println("row num " + memo_row + " row start " + row_start + " row stop " + row_stop);
             int len = row_stop - row_start;
 //Debug.dump(mdb.getPageBuffer(), row_start, len);
-            String text = mdb.getJetString(row_start, len);
+            String text = mdb.getJetString(mdb.getPageBuffer(), row_start, len);
             // make sure to swap page back
             mdb.swapPageBuffer();
             return text;
@@ -802,7 +912,7 @@ Debug.println("failed to read page: " + lval_pg);
             String text = null;
             do {
                 if (mdb.readPage(lval_pg) != mdb.getPageSize()) {
-Debug.println("failed to read page: " + lval_pg);
+Debug.println(Level.WARNING, "failed to read page: " + lval_pg);
                     return null;
                 }
                 int row_stop = (memo_row != 0) ? mdb.readShort(10 + (memo_row - 1) * 2) & 0x0fff : mdb.getPageSize() - 1;
@@ -862,7 +972,7 @@ Debug.println("failed to read page: " + lval_pg);
             if (size < 0) {
                 throw new IllegalArgumentException(String.valueOf(size));
             }
-            return mdb.getJetString(start, size);
+            return mdb.getJetString(mdb.getPageBuffer(), start, size);
         case SDATETIME:
             double value = mdb.readDouble(start);
             if (value == 0.0) {
@@ -894,6 +1004,11 @@ Debug.println("failed to read page: " + lval_pg);
             }
         }
         return false;
+    }
+
+    /* */
+    public String toString() {
+        return getClass().getName() + ": " + name + "[" + numberOfRows + "], " + StringUtil.paramString(columns);
     }
 }
 

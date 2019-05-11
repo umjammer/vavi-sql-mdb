@@ -32,7 +32,7 @@ class Sarg {
 
     /** */
     int test_string(String s) {
-        
+
         if (op == OP_LIKE) {
             return likeCompare(s, (String) value);
         }
@@ -64,7 +64,7 @@ class Sarg {
             }
             break;
         default:
-System.err.println("Calling mdb_test_sarg on unknown operator. Add code to mdb_test_string() for operator " + op);
+System.err.println("Calling testSarg on unknown operator. Add code to Sarg:test_string() for operator " + op);
             break;
         }
         return 0;
@@ -100,7 +100,7 @@ System.err.println("Calling mdb_test_sarg on unknown operator. Add code to mdb_t
             }
             break;
         default:
-System.err.println("Calling mdb_test_sarg on unknown operator. Add code to mdb_test_int() for operator " + op);
+System.err.println("Calling testSarg on unknown operator. Add code to Sarg#test_int() for operator " + op);
             break;
         }
         return 0;
@@ -121,7 +121,7 @@ System.err.println("Calling mdb_test_sarg on unknown operator. Add code to mdb_t
 //            int lastchar = length > 255 ? 255 : length;
             return test_string(tmpbuf);
         default:
-System.err.println("Calling mdb_test_sarg on unknown type.  Add code to mdb_test_sarg() for type " + col.type);
+System.err.println("Calling testSarg on unknown type.  Add code to Sarg#testSarg() for type " + col.type);
             break;
         }
         return 1;
@@ -130,7 +130,7 @@ System.err.println("Calling mdb_test_sarg on unknown type.  Add code to mdb_test
     /** */
     private int likeCompare(String s, String r) {
         int ret;
-        
+
         switch (r.charAt(0)) {
         case '\0':
             if (s.charAt(0) == '\0') {

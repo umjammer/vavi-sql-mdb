@@ -9,35 +9,37 @@
 
 package vavi.apps.mdbtools;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import org.mozilla.universalchardet.UniversalDetector;
+
+import vavi.apps.mdbtools.backend.AccessBackend;
 import vavi.util.Debug;
 import vavi.util.StringUtil;
 
 
 /**
- * Handle.
- * 
+ * MdbFile.
+ *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
-class MdbFile implements Cloneable {
+public class MdbFile implements Cloneable {
 
     static final int PAGE_SIZE = 4096;
 
     class Statistics {
         boolean collect;
-        long pg_reads;
+        long pageReads;
     }
 
     /** */
@@ -73,18 +75,19 @@ class MdbFile implements Cloneable {
     static int referencesCount;
 
     /** */
-    public byte[] getPageBuffer() {
+    byte[] getPageBuffer() {
         return pageBuffer;
     }
 
     /** */
-    public byte[] getAltPageBuffer() {
+    byte[] getAltPageBuffer() {
         return altPageBuffer;
     }
 
-    /** */
+    /** use functions below */
     private int[] formats;
 
+    // use functions below
     private static final int INDEX_PAGE_SIZE = 0;
     private static final int INDEX_ROW_COUNT_OFFSET = 1;
     private static final int INDEX_TAB_NUM_ROWS_OFFSET = 2;
@@ -95,10 +98,14 @@ class MdbFile implements Cloneable {
     private static final int INDEX_TAB_FIRST_DPG_OFFSET = 7;
     private static final int INDEX_TAB_COLS_START_OFFSET = 8;
     private static final int INDEX_TAB_RIDX_ENTRY_SIZE = 9;
-    private static final int INDEX_COL_FIXED_OFFSET = 10;
+    private static final int INDEX_COL_FLAGS_OFFSET = 10;
     private static final int INDEX_COL_SIZE_OFFSET = 11;
     private static final int INDEX_COL_NUM_OFFSET = 12;
     private static final int INDEX_TAB_COL_ENTRY_SIZE = 13;
+    private static final int INDEX_TAB_FREE_MAP_OFFSET = 14;
+    private static final int INDEX_TAB_COL_OFFSET_VAR = 15;
+    private static final int INDEX_TAB_COL_OFFSET_FIXED = 16;
+    private static final int INDEX_TAB_ROW_COL_NUM_OFFSET = 17;
 
     /** */
     int getPageSize() {
@@ -126,7 +133,7 @@ class MdbFile implements Cloneable {
     }
 
     /** */
-    int getUsageMapOfTableOffset() {
+    int getTableUsageMapOffset() {
         return formats[INDEX_TAB_USAGE_MAP_OFFSET];
     }
 
@@ -141,43 +148,63 @@ class MdbFile implements Cloneable {
     }
 
     /** */
-    int getStartColumnIndexOfTableOffset() {
+    int getTableColumnStartOffset() {
         return formats[INDEX_TAB_COLS_START_OFFSET];
     }
 
     /** */
-    int getRealIndicesEntrySize() {
+    int getTableRealIndicesEntrySize() {
         return formats[INDEX_TAB_RIDX_ENTRY_SIZE];
     }
 
     /** */
-    int getFixedSizeOfColumnOffset() {
-        return formats[INDEX_COL_FIXED_OFFSET];
+    int getColumnFlagsOffset() {
+        return formats[INDEX_COL_FLAGS_OFFSET];
     }
 
     /** */
-    int getSizeOfColumnOffset() {
+    int getColumnSizeOffset() {
         return formats[INDEX_COL_SIZE_OFFSET];
     }
 
     /** */
-    int getNumberOfColumnOffset() {
+    int getColumnNumberOffset() {
         return formats[INDEX_COL_NUM_OFFSET];
     }
 
     /** */
-    int getColumnEntrySizeOfTable() {
+    int getTableColumnEntrySize() {
         return formats[INDEX_TAB_COL_ENTRY_SIZE];
     }
 
     /** */
+    int getTableFreeMapOffset() {
+        return formats[INDEX_TAB_FREE_MAP_OFFSET];
+    }
+
+    /** */
+    int getTableColumnOffsetVar() {
+        return formats[INDEX_TAB_COL_OFFSET_VAR];
+    }
+
+    /** */
+    int getTableRowColumnNumberOffset() {
+        return formats[INDEX_TAB_ROW_COL_NUM_OFFSET];
+    }
+
+    /** */
+    int getTableColumnOffsetFixed() {
+        return formats[INDEX_TAB_COL_OFFSET_FIXED];
+    }
+
+    /** */
     private static final int[] jet4Constants = {
-        4096, 0x0c, 12, 45, 47, 51, 55, 56, 63, 12, 15, 23, 5, 25
+        4096, 0x0c, 12, 45, 47, 51, 55, 56, 63, 12, 15, 23, 5, 25, 59, 7, 21, 9
     };
 
     /** */
     private static final int[] jet3Constants = {
-        2048, 0x08, 12, 25, 27, 31, 35, 36, 43, 8, 13, 16, 1, 18
+        2048, 0x08, 12, 25, 27, 31, 35, 36, 43, 8, 13, 16, 1, 18, 39, 3, 14, 5
     };
 
     /** */
@@ -219,22 +246,53 @@ class MdbFile implements Cloneable {
     static final String encoding = "UTF-16LE";
 
     /** */
-    String getJetString(int offset, int length) {
+    String getJetString(byte[] buf, int offset, int length) {
+        byte[] tmp = null;
+        int sp = 0;
+        if (!isJet3() && length >= 2 && (buf[offset] & 0xff) == 0xff && (buf[offset + 1] & 0xff) == 0xfe) {
+            int compress = 1;
+            sp += 2;
+            length -= 2;
+            tmp = new byte[length * 2];
+            int tp = 0;
+            while (length > 0) {
+                if (buf[offset + sp] == 0) {
+                    compress = compress != 0 ? 1: 0;
+                    sp++;
+                    length--;
+                } else if (compress != 0) {
+                    tmp[tp++] = buf[offset + sp++];
+                    tmp[tp++] = 0;
+                    length--;
+                } else if (length >= 2) {
+                    tmp[tp++] = buf[offset + sp++];
+                    tmp[tp++] = buf[offset + sp++];
+                    length -= 2;
+                }
+            }
+        }
+
         String text = null;
         if (isJet3()) {
             text = new String(pageBuffer, offset, length);
         } else {
-            if (readByte(offset) == 0xff && readByte(offset + 1) == 0xfe) { // Byte Order Mark ???
-                text = new String(pageBuffer, offset + 2, length - 2);
-            } else {
-                try {
-                    // convert unicode to ascii, rather sloppily
-                    text = new String(pageBuffer, offset, length, encoding);
-                } catch (UnsupportedEncodingException e) {
-                    throw new IllegalStateException(e);
+            if ((buf[offset] & 0xff) == 0xff && (buf[offset + 1] & 0xff) == 0xfe) { // Byte Order Mark ???
+                UniversalDetector detector = new UniversalDetector(null);
+                detector.handleData(tmp, 0, tmp.length);
+                detector.dataEnd();
+
+                String encoding = detector.getDetectedCharset();
+                if (encoding != null) {
+                    text = new String(tmp, 0, tmp.length, Charset.forName(encoding));
+                } else {
+                    text = new String(tmp, 0, tmp.length, Charset.forName(MdbFile.encoding));
                 }
+            } else {
+                // convert unicode to ascii, rather sloppily
+                text = new String(buf, offset, length, Charset.forName(MdbFile.encoding));
             }
         }
+//System.err.println("here 2: " + StringUtil.getDump(text.getBytes(Charset.forName("utf8"))));
         return text;
     }
 
@@ -251,7 +309,7 @@ class MdbFile implements Cloneable {
         }
         return position;
     }
-    
+
     //----
 
     /** */
@@ -347,10 +405,10 @@ class MdbFile implements Cloneable {
         // get the db encryption key and xor it back to clear text
         this.key = readInt(0x3e);
         this.key ^= 0xe15e01b9;
-ByteArrayOutputStream baos = new ByteArrayOutputStream(4);
-DataOutputStream dos = new DataOutputStream(baos);
-dos.writeInt(key);
-Debug.dump(baos.toByteArray(), 0, 4);
+//ByteArrayOutputStream baos = new ByteArrayOutputStream(4);
+//DataOutputStream dos = new DataOutputStream(baos);
+//dos.writeInt(key);
+//Debug.dump(baos.toByteArray(), 0, 4);
         // get the db password located at 0x42 bytes into the file
         for (int pos = 0; pos < 14; pos++) {
             int j = readInt(0x42 + pos);
@@ -363,7 +421,7 @@ Debug.dump(baos.toByteArray(), 0, 4);
         }
 
         //
-        this.backend = Backend.getInstance("access");
+        this.backend = Backend.getInstance(AccessBackend.class.getName());
         //
         this.catalogs = Catalog.readCatalogs(this, Catalog.Type.TABLE);
         //
@@ -378,13 +436,13 @@ Debug.dump(baos.toByteArray(), 0, 4);
     /**
      * mdb_read a wrapper for read that bails if anything is wrong
      */
-    public int readPage(long page) throws IOException {
+    int readPage(long page) throws IOException {
         int length = _readPage(pageBuffer, page);
         return length;
     }
 
     /** */
-    public int readAltPage(long page) throws IOException {
+    int readAltPage(long page) throws IOException {
         int length = _readPage(altPageBuffer, page);
         return length;
     }
@@ -393,13 +451,15 @@ Debug.dump(baos.toByteArray(), 0, 4);
     private int _readPage(byte[] buffer, long page) throws IOException {
 
         long offset = page * getPageSize();
-//Debug.println("offset: " + StringUtil.toHex8((int) offset) + ", page: " + page);
+//Debug.println(String.format("offset: %02x, page: %08x, %08x", offset, page, getPageSize()));
 
         if (this.raFile.length() < offset) {
-            throw new IllegalArgumentException("offset " + offset + " is beyond EOF: " + page);
+//Debug.println(String.format("offset %08x is beyond EOF: %08x", offset, page));
+//            return 0;
+            throw new IllegalArgumentException(String.format("offset %08x is beyond EOF: %08x", offset, page));
         }
         if (stats != null && stats.collect) {
-            stats.pg_reads++;
+            stats.pageReads++;
         }
 
         raFile.seek(offset);    // SEEK_SET
@@ -415,7 +475,7 @@ Debug.dump(baos.toByteArray(), 0, 4);
     }
 
     /** */
-    public void swapPageBuffer() {
+    void swapPageBuffer() {
         byte[] tmpbuf = new byte[PAGE_SIZE];
 
         System.arraycopy(pageBuffer, 0, tmpbuf, 0, PAGE_SIZE);
@@ -424,7 +484,7 @@ Debug.dump(baos.toByteArray(), 0, 4);
     }
 
     /** */
-    public int readByte(int offset) {
+    int readByte(int offset) {
         int c = pageBuffer[offset] & 0xff;
         return c;
     }
@@ -437,14 +497,14 @@ Debug.dump(baos.toByteArray(), 0, 4);
     }
 
     /** */
-    public int readShort(int offset) {
+    int readShort(int offset) {
         int i = read16Bit(pageBuffer, offset);
 
         return i;
     }
 
     /** */
-    public int read24BitMsb(int offset) {
+    int read24BitMsb(int offset) {
         int l = 0;
 
         l |= (pageBuffer[offset    ] & 0xff) << 16;
@@ -456,7 +516,7 @@ Debug.dump(baos.toByteArray(), 0, 4);
     }
 
     /** */
-    public int read24Bit(int offset) {
+    int read24Bit(int offset) {
         int l = 0;
 
         l |= (pageBuffer[offset + 2] & 0xff) << 16;
@@ -481,13 +541,13 @@ Debug.dump(baos.toByteArray(), 0, 4);
     }
 
     /** */
-    public int readInt(int offset) {
+    int readInt(int offset) {
         int l = read32Bit(pageBuffer, offset);
         return l;
     }
 
     /** TODO */
-    public float readFloat(int offset) {
+    float readFloat(int offset) {
         byte[] b = new byte[4];
         System.arraycopy(pageBuffer, offset, b, 0, 4);
 
@@ -507,7 +567,7 @@ Debug.dump(baos.toByteArray(), 0, 4);
     }
 
     /** TODO */
-    public double readDouble(int offset) {
+    double readDouble(int offset) {
         byte[] b = new byte[8];
         System.arraycopy(pageBuffer, offset, b, 0, 8);
 
@@ -525,6 +585,41 @@ Debug.dump(baos.toByteArray(), 0, 4);
 
 //Debug.println("double: " + Double.longBitsToDouble(d));
         return Double.longBitsToDouble(d);
+    }
+
+    static final int OFFSET_MASK = 0x1fff;
+
+    /**
+     * @param pg_row Lower byte contains the row number, the upper three contain page
+     * @param off Pointer for returning an offset to the row
+     * @param len Pointer for returning the length of the row
+     */
+    byte[] find_pg_row(int pg_row, int[] off, int[] len) throws IOException {
+        int pg = pg_row >> 8;
+        int row = pg_row & 0xff;
+
+        if (readAltPage(pg) != getPageSize()) {
+            throw new IllegalStateException();
+        }
+        swapPageBuffer();
+        find_row(row, off, len);
+        swapPageBuffer();
+        return altPageBuffer;
+    }
+
+    void find_row(int row, int[] start, int[] len) {
+        int rco = getRowCountOffset();
+        int next_start;
+
+        if (row > 1000) {
+            throw new IllegalStateException("row > 1000");
+        }
+
+        start[0] = read16Bit(pageBuffer, rco + 2 + row * 2);
+//Debug.println("start: " + start[0]);
+        next_start = (row == 0) ? getPageSize() : read16Bit(pageBuffer, rco + row * 2) & OFFSET_MASK;
+//Debug.println("next_start: " + next_start + ", " + (start[0] & OFFSET_MASK));
+        len[0] = next_start - (start[0] & OFFSET_MASK);
     }
 
     //---- index
@@ -660,7 +755,7 @@ Debug.dump(baos.toByteArray(), 0, 4);
         if (stats == null) {
             return;
         }
-Debug.println("Physical Page Reads: " + stats.pg_reads);
+Debug.println("Physical Page Reads: " + stats.pageReads);
     }
 
     //---- data
@@ -670,7 +765,7 @@ Debug.println("Physical Page Reads: " + stats.pg_reads);
      * one. If we don't find one, then the end of the page is the correct
      * value.
      */
-    public int findEndRowIndex(int row) {
+    int findEndRowIndex(int row) {
         int endRow;
 
         if (row == 0) {
@@ -684,21 +779,22 @@ Debug.println("Physical Page Reads: " + stats.pg_reads);
     //----
 
     /** loop over each entry in the catalog */
-    private Table getTable(String name) throws IOException {
+    public Table getTable(String name) throws IOException {
         for (Catalog catalog : this.catalogs) {
+//System.err.println(catalog.name + ", " + name + ", " + catalog.name.equals(name));
             if (catalog.type == Catalog.Type.TABLE && catalog.name.equals(name)) {
                 return new Table(catalog);
             }
         }
 
-        throw new IllegalStateException(name + " not found");
+        throw new IllegalArgumentException(name + " not found");
     }
 
     /** */
     private String getRelationships() throws IOException {
-        
+
         String text = null;
-        
+
         // child column
         // child table
         // parent column
@@ -729,23 +825,6 @@ Debug.println("Physical Page Reads: " + stats.pg_reads);
             text = backend.getRelationshipString(relationships);
         }
         return text;
-    }
-
-    //----
-
-    /** */
-    public static void main(String[] args) throws IOException {
-        MdbFile mdb = new MdbFile(args[0]);
-Debug.println(StringUtil.paramString(mdb));
-
-        Table table = mdb.getTable(args[1]);
-        for (Object[] values : table.fetchRows()) {
-            for (int c = 0; c < table.columns.size(); c++) {
-                Column column = table.columns.get(c);
-                Object value = values[c];
-                System.err.println(c + ": " + column.name + ": " + column.type + ": " + value);
-            }
-        }
     }
 }
 

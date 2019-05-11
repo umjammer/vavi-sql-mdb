@@ -84,6 +84,103 @@ class Index {
         0x81, 0x00, 0x00, 0x00, 'x' , 0x00, 0x00, 0x00,    //         0xf8-0xff
     };
 
+    /*
+     *  JET Red (v4) Index definition byte layouts
+     * <pre>
+     * Based on:
+     *
+     * http://jabakobob.net/mdb/table-page.html
+     * https://github.com/jahlborn/jackcess
+     *
+     * plus inspection of JET (Red) 4 databases.  (JET 3 format has fewer
+     * fields -- some of the ones below omitted, and others narrower.)
+     *
+     * See also JET Blue (Extensible Storage Engine) format information:
+     *
+     * https://github.com/libyal/libesedb/blob/master/documentation/Extensible%20Storage%20Engine%20%28ESE%29%20Database%20File%20%28EDB%29%20format.asciidoc
+     *
+     * which is a later Microsoft embedded database format with the same
+     * early base format.
+     *
+     * ----------------------------------------------------------------------
+     * Index Column Definitions:
+     * - for each "non foreign key" index (ie pidx->index_type!=2), a list
+     *   of columns indexed
+     *
+     * Repeated table->num_real_idxs times:
+     *
+     * Offset   Bytes   Meaning
+     * 0x0000   4   UNKNOWN; seems to be type marker, usually 1923 or 0
+     *
+     * 0x0004       2       Column 1 ID
+     * 0x0006       1       Column 1 Flags
+     * 0x0007       2       Column 2 ID
+     * 0x0009       1       Column 2 Flags
+     * 0x000A       2       Column 3 ID
+     * 0x000C       1       Column 3 Flags
+     * 0x000D       2       Column 4 ID
+     * 0x000F       1       Column 4 Flags
+     * 0x0010       2       Column 5 ID
+     * 0x0012       1       Column 5 Flags
+     * 0x0013       2       Column 6 ID
+     * 0x0015       1       Column 6 Flags
+     * 0x0016       2       Column 7 ID
+     * 0x0018       1       Column 7 Flags
+     * 0x0019       2       Column 8 ID
+     * 0x001B       1       Column 8 Flags
+     * 0x001C       2       Column 9 ID
+     * 0x001E       1       Column 9 Flags
+     * 0x001F       2       Column 10 ID
+     * 0x0021       1       Column 10 Flags
+     *
+     * 0x0022   1   Usage Map row
+     * 0x0023   3   Usage Map page (24-bit)
+     * 0x0026   4   First index page
+     * 0x002A   4   UNKNOWN
+     * 0x002E   2   Index Flags
+     * 0x0030   4   UNKNOWN; seems to always be 0
+     * 0x0034
+     *
+     * Column ID of 0xFFFF (-1) means "not used" or "end of used columns".
+     * Column Flags:
+     * - 0x01 = Ascending
+     *
+     * Index Flags:
+     * - 0x0001 = Unique index
+     * - 0x0002 = Ignore NULLs
+     * - 0x0008 = Required Index
+     *
+     * ----------------------------------------------------------------------
+     * Index Definitions
+     * - for each index (normal, primary key, foreign key), details on the
+     *   index.
+     *
+     * - this appears to be the union of information required for normal/
+     *   primary key indexes, and the information required for foreign key
+     *   indexes.
+     *
+     * Repeated table->num_idxs times:
+     *
+     * Offset   Bytes   Meaning
+     * 0x0000   4   UNKNOWN; apparently a type marker, usually 1625 or 0
+     * 0x0004   4   Logical Index Number
+     * 0x0008   4   Index Column Definition Entry
+     * 0x000C   1   FK Index Type
+     * 0x000D   4   FK Index Number
+     * 0x0011   4   FK Index Table Page Number
+     * 0x0015   1   Flags: Update Action
+     * 0x0016   1   Flags: Delete Action
+     * 0x0017   1   Index Type
+     * 0x0018   4   UNKNNOWN; seems to always be 0
+     * 0x001B
+     *
+     * Where Index Type is:
+     * 0x01 = normal
+     * 0x01 = primary key
+     * 0x02 = foreign key index reference
+     * </pre>
+     */
+
     /** */
     public boolean testSargs(MdbFile mdb, int offset, int len) {
         int c_offset = 0, c_len;

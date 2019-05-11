@@ -81,6 +81,8 @@ class Column {
 
     /** */
     private boolean fixed;
+    boolean longAuto;
+    boolean uuidAuto;
 
     /** */
     int queryOrder;
@@ -93,6 +95,11 @@ class Column {
     int precision;
     /** */
     int scale;
+
+    int varColNum;
+    int rowColNum;
+
+    int fixedOffset;
 
     /** */
     public boolean testSargs(MdbFile mdb, int offset, int len) {

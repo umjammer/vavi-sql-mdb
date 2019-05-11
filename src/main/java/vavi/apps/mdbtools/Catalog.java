@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import vavi.util.Debug;
+import vavi.util.StringUtil;
 
 
 /**
@@ -23,7 +24,7 @@ import vavi.util.Debug;
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 class Catalog {
-    
+
     enum Type {
         FORM(0),
         TABLE(1),
@@ -57,19 +58,23 @@ class Catalog {
 
     /** */
     MdbFile mdb;
+
     /** */
     String name;
     /** */
     Type type;
     /** */
     long tablePage;
+    /** */
+    int flag;
 
     /** */
-    Catalog(MdbFile mdb, String name, Type type, int tablePage) {
+    Catalog(MdbFile mdb, String name, Type type, int tablePage, int flag) {
         this.mdb = mdb;
         this.name = name;
         this.type = type;
         this.tablePage = tablePage;
+        this.flag = flag;
 //Debug.println(StringUtil.paramString(this));
     }
 
@@ -79,10 +84,12 @@ class Catalog {
         List<Catalog> catalogs = new ArrayList<>();
 
         // dummy up a catalog entry so we may read the table def
-        Catalog catalog = new Catalog(mdb, "MSysObjects", Type.TABLE, 2);
-        
+        Catalog catalog = new Catalog(mdb, "MSysObjects", Type.TABLE, 2, 0);
+
         Table table = new Table(catalog);
 //catalog.dumpTable();
+//table.columns.forEach(c -> System.err.print(c.name + ":" + c.type + ", "));
+//System.err.println();
         for (Object[] values : table.fetchRows()) {
 //Debug.println("values: " + StringUtil.paramString(values));
             int type = (Short) values[3];
@@ -91,7 +98,8 @@ class Catalog {
                     mdb,
                     (String) values[2],
                     Type.valueOf(type & 0x7f),
-                    (Integer) values[0] & 0x00ffffff);
+                    (Integer) values[0] & 0x00ffffff,
+                    (Integer) values[7]);
 
                 catalogs.add(catalog);
             }
@@ -103,20 +111,21 @@ class Catalog {
     /** */
     void dumpTable() throws IOException {
         Table table = new Table(this);
-Debug.println("definition page     = " + tablePage);
-Debug.println("number of datarows  = " + table.numberOfRows);
-Debug.println("number of columns   = " + table.numberOfColumns);
-Debug.println("number of indices   = " + table.numberOfRealIndices);
-Debug.println("first data page     = " + table.firstDataPage);
-        
+//Debug.println("**** name           = " + name);
+//Debug.println("definition page     = " + tablePage);
+//Debug.println("number of datarows  = " + table.numberOfRows);
+//Debug.println("number of columns   = " + table.numberOfColumns);
+//Debug.println("number of indices   = " + table.numberOfRealIndices);
+//Debug.println("first data page     = " + table.firstDataPage);
+
         table.readIndices();
-        
+
         for (int i = 0; i < table.numberOfColumns; i++) {
             Column column = table.columns.get(i);
-            
-Debug.println("column " + i + " Name: " + column.name + " Type: " + mdb.backend.getColumnTypeString(column.type) + "(" + column.size + ")");
+
+//Debug.println("column " + i + " Name: " + column.name + " Type: " + mdb.backend.getColumnTypeString(column.type) + "(" + column.size + ")");
         }
-        
+
         for (int i = 0; i < table.numberOfIndices; i++) {
             Index index = table.indices.get(i);
             index.dump(table);
@@ -130,9 +139,9 @@ Debug.println("pages reserved by this object");
                 for (int bitNumber = 0; bitNumber < 8; bitNumber++) {
                     if ((table.usageMap[i] & (1 << bitNumber)) != 0) {
                         columnNumber++;
-System.err.print(pgnum + " ");
+                        System.err.print(pgnum + " ");
                         if (columnNumber == 10) {
-System.err.println();
+                            System.err.println();
                             columnNumber = 0;
                         }
                     }
@@ -140,6 +149,21 @@ System.err.println();
                 }
             }
         }
+    }
+
+    /** */
+    public boolean isUserTable() {
+        return type == Type.TABLE && (flag & 0x80000002) == 0;
+    }
+
+    /** */
+    public boolean isSystemTable() {
+        return type == Type.TABLE && (flag & 0x80000002) != 0;
+    }
+
+    /** */
+    public String toString() {
+        return getClass().getName() + ": " + type + ", " + name;
     }
 }
 
