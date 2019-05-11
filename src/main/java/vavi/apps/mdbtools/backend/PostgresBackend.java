@@ -17,10 +17,6 @@ import vavi.apps.mdbtools.Backend;
  */
 public class PostgresBackend extends Backend {
 
-    static {
-        name = "postgres";
-    }
-
     /** Postgres data types */
     private static final String[] typeStrings = {
         "Postgres_Unknown 0x00",

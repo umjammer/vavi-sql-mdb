@@ -19,10 +19,6 @@ import vavi.apps.mdbtools.Backend;
  */
 public class OracleBackend extends Backend {
 
-    static {
-        name = "oracle";
-    }
-
     /* Oracle data types */
     private static final String[] typeStrings = {
         "Oracle_Unknown 0x00",

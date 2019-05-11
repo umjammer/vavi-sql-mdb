@@ -17,10 +17,6 @@ import vavi.apps.mdbtools.Backend;
  */
 public class AccessBackend extends Backend {
 
-    static {
-        name = "accsess";
-    }
-
     /** Access data types */
     private static final String[] typeStrings = {
         "Unknown 0x00",

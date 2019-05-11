@@ -17,10 +17,6 @@ import vavi.apps.mdbtools.Backend;
  */
 public class SybaseBackend extends Backend {
 
-    static {
-        name = "sybase";
-    }
-
     /** Sybase/MSSQL data types */
     private static final String[] typeStrings = {
         "Sybase_Unknown 0x00",

@@ -32,9 +32,6 @@ public abstract class Backend {
     private static Map<String, Backend> backends = new HashMap<>();
 
     /** */
-    protected static String name;
-
-    /** */
     protected abstract String[] getTypeStrings();
 
     /** */
@@ -59,10 +56,10 @@ public abstract class Backend {
      * backends
      */
     static {
-        backends.put(AccessBackend.name, new AccessBackend());
-        backends.put(SybaseBackend.name, new SybaseBackend());
-        backends.put(OracleBackend.name, new OracleBackend());
-        backends.put(PostgresBackend.name, new PostgresBackend());
+        backends.put(AccessBackend.class.getName(), new AccessBackend());
+        backends.put(SybaseBackend.class.getName(), new SybaseBackend());
+        backends.put(OracleBackend.class.getName(), new OracleBackend());
+        backends.put(PostgresBackend.class.getName(), new PostgresBackend());
     }
 }
 
