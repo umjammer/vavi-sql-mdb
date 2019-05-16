@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +23,6 @@ import org.mozilla.universalchardet.UniversalDetector;
 
 import vavi.apps.mdbtools.backend.AccessBackend;
 import vavi.util.Debug;
-import vavi.util.StringUtil;
 
 
 /**

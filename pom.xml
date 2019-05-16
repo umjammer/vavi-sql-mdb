@@ -5,17 +5,26 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <groupId>vavi</groupId>
   <artifactId>vavi-sql-mdb</artifactId>
+  <version>0.0.1</version>
+
   <name>Vavi SQL MDB API</name>
   <organization>
     <name></name>
   </organization>
-  <version>1.0.0</version>
-  <url>http://www.vavisoft.com/</url>
+  <url>https://github.com/umjammer/vavi-sql-mdb</url>
   <description>TODO
 
     jdbc</description>
+  <scm>
+    <url>https://github.com/umjammer/vavi-sql-mdb</url>
+  </scm>
+  <issueManagement>
+    <url>https://github.com/umjammer/vavi-sql-mdb/issues</url>
+  </issueManagement>
+
   <build>
     <plugins>
       <plugin>
@@ -27,6 +36,7 @@
       </plugin>
     </plugins>
   </build>
+
   <repositories>
     <repository>
       <id>jitpack.io</id>
@@ -40,11 +50,12 @@
        <url>https://oss.sonatype.org/content/groups/public/</url>
      </repository>
   </repositories>
+
   <dependencies>
     <dependency>
       <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-commons-sandbox</artifactId>
-      <version>0.3.3</version>
+      <artifactId>vavi-commons</artifactId>
+      <version>1.0.7</version>
     </dependency>
     <dependency>
       <groupId>com.github.jsqlparser</groupId>
@@ -61,6 +72,7 @@
       <artifactId>sneakythrow</artifactId>
       <version>1.2.0</version>
     </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
@@ -74,4 +86,5 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
 </project>
