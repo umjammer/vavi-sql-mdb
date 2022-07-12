@@ -829,11 +829,17 @@ Debug.println(Level.WARNING, "Reading LVAL page failed");
             mdb.swapPageBuffer();
             int cur = 0;
             do {
+try {
                 if (mdb.readPage(lval_pg) != mdb.getPageSize()) {
 //Debug.println(Level.WARNING, "Failed to read: lval_pg: " + lval_pg);
                     // Failed to read
                     return null;
                 }
+} catch (IllegalArgumentException e) { // TODO
+Debug.printf(Level.WARNING, e.getMessage());
+ mdb.swapPageBuffer();
+ return baos.toByteArray();
+}
                 int row_stop = (ole_row != 0) ? (mdb.readShort(10 + (ole_row - 1) * 2) & 0x0fff) : (mdb.getPageSize() - 1);
                 int row_start = mdb.readShort(10 + ole_row * 2);
 //Debug.println("row num " + ole_row + ", row start " + row_start + ", row stop " + row_stop);
@@ -845,8 +851,8 @@ Debug.println(Level.WARNING, "Reading LVAL page failed");
                 // find next lval page
                 ole_row = mdb.readByte(row_start);
                 lval_pg = mdb.read24Bit(row_start + 1);
-//Debug.println(String.format("nReading LVAL page %08x", lval_pg));
-            } while (lval_pg != 0);
+//Debug.printf("nReading LVAL page %08x, %s, %s", lval_pg, (lval_pg & 0x800) == 0, (lval_pg & 0x400) == 0);
+            } while (lval_pg != 0 && ((lval_pg & 0x800) == 0 && (lval_pg & 0x400) == 0));
             // make sure to swap page back
             mdb.swapPageBuffer();
             return baos.toByteArray();
