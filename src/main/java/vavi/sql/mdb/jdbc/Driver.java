@@ -34,8 +34,8 @@ public class Driver implements java.sql.Driver {
     public java.sql.Connection connect(String urlString, Properties props)
         throws SQLException {
 
-        java.sql.Connection connection = new Connection();
-        ((Connection) connection).connect(urlString, props);
+        Connection connection = new Connection();
+        connection.connect(urlString, props);
 
         return connection;
     }

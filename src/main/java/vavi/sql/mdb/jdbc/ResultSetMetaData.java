@@ -19,7 +19,7 @@ import java.sql.Types;
 public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     /** */
-    private java.sql.ResultSet resultSet = null;
+    private ResultSet resultSet;
 
     /** */
     public ResultSetMetaData(ResultSet resultSet) {
@@ -28,7 +28,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     @Override
     public int getColumnCount() throws SQLException {
-        return 0;
+        return resultSet.valueList.size();
     }
 
     @Override

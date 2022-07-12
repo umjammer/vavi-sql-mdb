@@ -18,16 +18,15 @@ import java.sql.Date;
 import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.Ref;
-import java.sql.ResultSet;
 import java.sql.RowId;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -39,24 +38,32 @@ import java.util.List;
 public class PreparedStatement implements java.sql.PreparedStatement {
 
     /** */
-    List<Object> vecParam = new ArrayList<>();
+    private Map<Integer, Object> params = new HashMap<>();
 
     /** */
-    private ResultSet currentResultSet;
+    private String[] columnNames;
 
     /** */
-    private Connection connection;
+    private java.sql.ResultSet currentResultSet;
+
+    /** */
+    private Engine engine;
 
     /** */
     private String sql;
 
     /** */
-    public PreparedStatement(Connection connection, String sql) {
-        this.connection = connection;
+    public PreparedStatement(Engine engine, String sql) {
+        this.engine = engine;
         this.sql = sql;
     }
 
     /** */
+    public PreparedStatement(Engine engine, String sql, String[] columnNames) {
+        this(engine, sql);
+        this.columnNames = columnNames;
+    }
+
     @Override
     public java.sql.ResultSet executeQuery() throws SQLException {
         if (!execute()) {
@@ -75,93 +82,98 @@ public class PreparedStatement implements java.sql.PreparedStatement {
     }
 
     @Override
-    @Override
+    public boolean execute() throws SQLException {
+        return engine.excute(sql);
     }
 
-    public void setBoolean(int parameterIndex, boolean x)
-        throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
     @Override
+    public java.sql.ResultSet getResultSet() throws SQLException {
+        return new ResultSet(engine.getValues());
+    }
+
     @Override
+    public int executeUpdate(String arg0, String[] arg1) throws SQLException {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
     @Override
+    public boolean execute(String arg0, String[] arg1) throws SQLException {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
     @Override
+    public ResultSet executeQuery(String arg0) throws SQLException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void setBoolean(int parameterIndex, boolean x) throws SQLException {
+        params.put(parameterIndex, x);
     }
 
     @Override
     public void setByte(int parameterIndex, byte x) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        params.put(parameterIndex, x);
     }
 
     @Override
     public void setShort(int parameterIndex, short x) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        params.put(parameterIndex, x);
     }
 
     @Override
     public void setInt(int parameterIndex, int x) throws SQLException {
-        // かなり乱暴な対応方法
-        if (parameterIndex > vecParam.size()) {
-            vecParam.add(new Integer(x));
-        } else {
-            throw new UnsupportedOperationException("Not implemented.");
-        }
+        params.put(parameterIndex, x);
     }
 
     @Override
     public void setLong(int parameterIndex, long x) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        params.put(parameterIndex, x);
     }
 
     @Override
     public void setFloat(int parameterIndex, float x) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        params.put(parameterIndex, x);
     }
 
-    public void setDouble(int parameterIndex, double x)
-        throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
     @Override
+    public void setDouble(int parameterIndex, double x) throws SQLException {
+        params.put(parameterIndex, x);
     }
 
-    public void setBigDecimal(int parameterIndex, BigDecimal x)
-        throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
     @Override
+    public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
+        params.put(parameterIndex, x);
     }
 
-    public void setString(int parameterIndex, String x)
-        throws SQLException {
-        if (parameterIndex > vecParam.size()) {
-            vecParam.add(x);
-        } else {
-            throw new UnsupportedOperationException("Not implemented.");
     @Override
-        }
+    public void setString(int parameterIndex, String x) throws SQLException {
+        params.put(parameterIndex, x);
     }
 
-    public void setBytes(int parameterIndex, byte[] x)
-        throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
     @Override
+    public void setBytes(int parameterIndex, byte[] x) throws SQLException {
+        params.put(parameterIndex, x);
     }
 
-    public void setDate(int parameterIndex, Date x)
-        throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
     @Override
+    public void setDate(int parameterIndex, Date x) throws SQLException {
+        params.put(parameterIndex, x);
     }
 
-    public void setTime(int parameterIndex,
-                        Time x)
-        throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
     @Override
+    public void setTime(int parameterIndex, Time x) throws SQLException {
+        params.put(parameterIndex, x);
     }
 
-    public void setTimestamp(int parameterIndex,
-                             Timestamp x)
-        throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+    @Override
+    public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
+        params.put(parameterIndex, x);
+    }
+
     @Override
     public SQLWarning getWarnings() throws SQLException {
         // TODO Auto-generated method stub
@@ -198,16 +210,14 @@ public class PreparedStatement implements java.sql.PreparedStatement {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    public void setObject(int parameterIndex, Object x)
-        throws SQLException {
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    public boolean execute() throws SQLException {
-        return false;
     @Override
+    public void setObject(int parameterIndex, Object x) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
@@ -499,31 +509,6 @@ public class PreparedStatement implements java.sql.PreparedStatement {
 
     @Override
     public ResultSet getGeneratedKeys() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public ResultSet getResultSet() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public SQLWarning getWarnings() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public int executeUpdate(String arg0, String[] arg1) throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    public boolean execute(String arg0, String[] arg1) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    public ResultSet executeQuery(String arg0) throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }

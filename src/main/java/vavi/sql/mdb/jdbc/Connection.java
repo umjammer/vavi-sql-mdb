@@ -48,23 +48,21 @@ public class Connection implements java.sql.Connection {
 
     private String url;
 
-    MdbFile mdb;
+    private Engine engine;
 
     @Override
     public java.sql.Statement createStatement() throws SQLException {
-        return new Statement(this);
+        return new Statement(engine);
     }
 
     @Override
     public java.sql.PreparedStatement prepareStatement(String sql) throws SQLException {
-
-        throw new UnsupportedOperationException("Not implemented.");
+        return new PreparedStatement(engine, sql);
     }
 
-    /** TODO */
+    @Override
     public java.sql.PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
-
-        throw new UnsupportedOperationException("Not implemented.");
+        return new PreparedStatement(engine, sql, columnNames);
     }
 
     @Override
@@ -116,7 +114,7 @@ public class Connection implements java.sql.Connection {
 Debug.println(Level.FINE, "url: " + url + ", " + filename);
 
         try {
-            this.mdb = new MdbFile(filename);
+            this.engine = new Engine(new MdbFile(filename));
         } catch (IOException e) {
             throw new SQLException(e);
         }
