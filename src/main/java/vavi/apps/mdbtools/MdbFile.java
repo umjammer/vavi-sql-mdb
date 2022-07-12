@@ -215,11 +215,16 @@ public class MdbFile implements Cloneable {
     private static final int VERSION_JET3 = 0;
     /** */
     private static final int VERSION_JET4 = 1;
+    private static final int MDB_VER_ACCDB_2007 = 0x02;
+    private static final int MDB_VER_ACCDB_2010 = 0x03;
+    private static final int MDB_VER_ACCDB_2013 = 0x04;
+    private static final int MDB_VER_ACCDB_2016 = 0x05;
+    private static final int MDB_VER_ACCDB_2019 = 0x06;
 
     /** */
     public boolean isJet4() {
 //Debug.println("jetVersion: " + mdbFile.jetVersion);
-        return jetVersion == VERSION_JET4;
+        return jetVersion >= VERSION_JET4;
     }
 
     /** */
