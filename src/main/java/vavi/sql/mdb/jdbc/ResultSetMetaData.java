@@ -16,8 +16,7 @@ import java.sql.Types;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040620 nsano initial version <br>
  */
-public class ResultSetMetaData
-    implements java.sql.ResultSetMetaData {
+public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     /** */
     private java.sql.ResultSet resultSet = null;
@@ -27,47 +26,47 @@ public class ResultSetMetaData
         this.resultSet = resultSet;
     }
 
-    /** TODO */
+    @Override
     public int getColumnCount() throws SQLException {
         return 0;
     }
 
-    /** */
+    @Override
     public boolean isAutoIncrement(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public boolean isCaseSensitive(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public boolean isSearchable(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public boolean isCurrency(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public int isNullable(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public boolean isSigned(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public int getColumnDisplaySize(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public String getColumnLabel(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
@@ -77,27 +76,27 @@ public class ResultSetMetaData
         return null;
     }
 
-    /** */
+    @Override
     public String getSchemaName(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public int getPrecision(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public int getScale(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public String getTableName(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public String getCatalogName(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
@@ -107,38 +106,38 @@ public class ResultSetMetaData
         return Types.OTHER;
     }
 
-    /** */
+    @Override
     public String getColumnTypeName(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public boolean isReadOnly(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public boolean isWritable(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public boolean isDefinitelyWritable(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public String getColumnClassName(int column) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /* @see java.sql.Wrapper#isWrapperFor(java.lang.Class) */
+    @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         // TODO Auto-generated method stub
         return false;
     }
 
-    /* @see java.sql.Wrapper#unwrap(java.lang.Class) */
+    @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         // TODO Auto-generated method stub
         return null;

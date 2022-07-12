@@ -10,6 +10,9 @@
 package vavi.apps.mdbtools;
 
 
+import vavi.util.Debug;
+
+
 /**
  * Sarg.
  * 
@@ -27,7 +30,7 @@ class Sarg {
     static final int OP_ISNULL = 7;
     static final int OP_NOTNULL = 8;
 
-    int    op;
+    int op;
     Object value;
 
     /** */
@@ -64,7 +67,7 @@ class Sarg {
             }
             break;
         default:
-System.err.println("Calling testSarg on unknown operator. Add code to Sarg:test_string() for operator " + op);
+Debug.println("Calling testSarg on unknown operator. Add code to Sarg:test_string() for operator " + op);
             break;
         }
         return 0;
@@ -72,7 +75,7 @@ System.err.println("Calling testSarg on unknown operator. Add code to Sarg:test_
 
     /** */
     int test_int(int i) {
-        int v = ((Integer) value).intValue();
+        int v = (int) value;
         switch (op) {
         case OP_EQUAL:
             if (v == i) {
@@ -100,7 +103,7 @@ System.err.println("Calling testSarg on unknown operator. Add code to Sarg:test_
             }
             break;
         default:
-System.err.println("Calling testSarg on unknown operator. Add code to Sarg#test_int() for operator " + op);
+Debug.println("Calling testSarg on unknown operator. Add code to Sarg#test_int() for operator " + op);
             break;
         }
         return 0;
@@ -121,7 +124,7 @@ System.err.println("Calling testSarg on unknown operator. Add code to Sarg#test_
 //            int lastchar = length > 255 ? 255 : length;
             return test_string(tmpbuf);
         default:
-System.err.println("Calling testSarg on unknown type.  Add code to Sarg#testSarg() for type " + col.type);
+Debug.println("Calling testSarg on unknown type.  Add code to Sarg#testSarg() for type " + col.type);
             break;
         }
         return 1;

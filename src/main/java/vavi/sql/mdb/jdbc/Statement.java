@@ -53,8 +53,7 @@ import net.sf.jsqlparser.statement.select.SelectVisitorAdapter;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040620 nsano initial version <br>
  */
-public class Statement
-    implements java.sql.Statement {
+public class Statement implements java.sql.Statement {
 
     /** */
     private Connection connection = null;
@@ -74,7 +73,7 @@ public class Statement
         this.connection = connection;
     }
 
-    /** */
+    @Override
     protected void finalize() {
         try {
             close();
@@ -83,7 +82,7 @@ public class Statement
         }
     }
 
-    /** */
+    @Override
     public java.sql.ResultSet executeQuery(String sql) throws SQLException {
         if (execute(sql) == false) {
             return null;
@@ -94,7 +93,7 @@ public class Statement
         return currentResultSet;
     }
 
-    /** */
+    @Override
     public int executeUpdate(String sql) throws SQLException {
         int count = -1;
 
@@ -106,6 +105,7 @@ public class Statement
     }
 
     /** TODO */
+    @Override
     public int executeUpdate(String sql, String[] columnNmaes)
         throws SQLException {
 
@@ -118,7 +118,7 @@ public class Statement
         return count;
     }
 
-    /** */
+    @Override
     public void close() throws SQLException {
         if (currentResultSet != null) {
             currentResultSet.close();
@@ -126,62 +126,62 @@ public class Statement
         }
     }
 
-    /** */
+    @Override
     public int getMaxFieldSize() throws SQLException {
         return 0;
     }
 
-    /** */
+    @Override
     public void setMaxFieldSize(int max) throws SQLException {
         if (max != 0) {
             throw new UnsupportedOperationException("Not implemented.");
         }
     }
 
-    /** */
+    @Override
     public int getMaxRows() throws SQLException {
         return 0;
     }
 
-    /** */
+    @Override
     public void setMaxRows(int max) throws SQLException {
         if (max != 0) {
             throw new UnsupportedOperationException("Not implemented.");
         }
     }
 
-    /** */
+    @Override
     public void setEscapeProcessing(boolean enable) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public int getQueryTimeout() throws SQLException {
         return 0;
     }
 
-    /** */
+    @Override
     public void setQueryTimeout(int seconds) throws SQLException {
         if (seconds != 0) {
             throw new UnsupportedOperationException("Not implemented.");
         }
     }
 
-    /** */
+    @Override
     public void cancel() throws SQLException {
     }
 
-    /** */
+    @Override
     public SQLWarning getWarnings() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public void clearWarnings() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public void setCursorName(String name) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
@@ -335,159 +335,148 @@ System.out.println("name=" + name);
         return false;
     }
 
-    /** */
+    @Override
     public boolean execute(String sql, int[] x) throws SQLException {
         return false;
     }
 
-    /** */
+    @Override
     public java.sql.ResultSet getResultSet() throws SQLException {
         return currentResultSet;
     }
 
     /** TODO */
+    @Override
     public int getUpdateCount() throws SQLException {
         return 0;
     }
 
-    /** */
+    @Override
     public boolean getMoreResults() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public void setFetchDirection(int direction) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public int getFetchDirection() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public void setFetchSize(int rows) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public int getFetchSize() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public int getResultSetConcurrency() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public int getResultSetType() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public void addBatch(String sql) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public void clearBatch() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public int[] executeBatch() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public java.sql.Connection getConnection() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public java.sql.ResultSet getGeneratedKeys() {
         return null;
     }
 
-    /**
-     * @see java.sql.Statement#getResultSetHoldability()
-     */
+    @Override
     public int getResultSetHoldability() throws SQLException {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    /**
-     * @see java.sql.Statement#getMoreResults(int)
-     */
+    @Override
     public boolean getMoreResults(int arg0) throws SQLException {
         // TODO Auto-generated method stub
         return false;
     }
 
-    /**
-     * @see java.sql.Statement#executeUpdate(java.lang.String, int)
-     */
+    @Override
     public int executeUpdate(String arg0, int arg1) throws SQLException {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    /**
-     * @see java.sql.Statement#execute(java.lang.String, int)
-     */
+    @Override
     public boolean execute(String arg0, int arg1) throws SQLException {
         // TODO Auto-generated method stub
         return false;
     }
 
-    /**
-     * @see java.sql.Statement#executeUpdate(java.lang.String, int[])
-     */
+    @Override
     public int executeUpdate(String arg0, int[] arg1) throws SQLException {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    /* @see java.sql.Statement#isClosed() */
+    @Override
     public boolean isClosed() throws SQLException {
         // TODO Auto-generated method stub
         return false;
     }
 
-    /* @see java.sql.Statement#isPoolable() */
+    @Override
     public boolean isPoolable() throws SQLException {
         // TODO Auto-generated method stub
         return false;
     }
 
-    /* @see java.sql.Statement#setPoolable(boolean) */
+    @Override
     public void setPoolable(boolean poolable) throws SQLException {
         // TODO Auto-generated method stub
         
     }
 
-    /* @see java.sql.Wrapper#isWrapperFor(java.lang.Class) */
+    @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         // TODO Auto-generated method stub
         return false;
     }
 
-    /* @see java.sql.Wrapper#unwrap(java.lang.Class) */
+    @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* @see java.sql.Statement#closeOnCompletion() */
     @Override
     public void closeOnCompletion() throws SQLException {
         // TODO Auto-generated method stub
         
     }
 
-    /* @see java.sql.Statement#isCloseOnCompletion() */
     @Override
     public boolean isCloseOnCompletion() throws SQLException {
         // TODO Auto-generated method stub

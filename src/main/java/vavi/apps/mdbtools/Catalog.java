@@ -88,8 +88,8 @@ class Catalog {
 
         Table table = new Table(catalog);
 //catalog.dumpTable();
-//table.columns.forEach(c -> System.err.print(c.name + ":" + c.type + ", "));
-//System.err.println();
+//table.columns.forEach(c -> Debug.print(c.name + ":" + c.type + ", "));
+//Debug.println();
         for (Object[] values : table.fetchRows()) {
 //Debug.println("values: " + StringUtil.paramString(values));
             int type = (Short) values[3];
