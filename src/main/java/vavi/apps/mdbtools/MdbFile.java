@@ -27,6 +27,12 @@ import vavi.util.Debug;
 
 /**
  * MdbFile.
+ * <p>
+ * system properties
+ * <li> mdb.path ... path for database </li>
+ * <li> mdb.jet4.encoding ... for jet4, default UTF-16 </li>
+ * <li> mdb.jet3.encoding ... for jet3, default ISO_8859_1 </li>
+ * </p>
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
@@ -241,24 +247,30 @@ public class MdbFile implements Cloneable {
         }
     }
 
-    static final String encoding = "UTF-16LE";
+    static final String jet4Encoding;
+    static final String jet3Encoding;
+
+    static {
+        jet4Encoding = System.getProperty("mdb.jet4.encoding", "UTF-16LE");
+        jet3Encoding = System.getProperty("mdb.jet3.encoding", "ISO_8859_1");
+    }
 
     /** */
     String getJetString(byte[] buf, int offset, int length) {
         byte[] tmp = null;
         int sp = 0;
-        if (!isJet3() && length >= 2 && (buf[offset] & 0xff) == 0xff && (buf[offset + 1] & 0xff) == 0xfe) {
-            int compress = 1;
+        if (!isJet3() && length >= 2 && (buf[offset] & 0xff) == 0xff && (buf[offset + 1] & 0xff) == 0xfe) { // compress?
+            boolean compress = true;
             sp += 2;
             length -= 2;
             tmp = new byte[length * 2];
             int tp = 0;
             while (length > 0) {
                 if (buf[offset + sp] == 0) {
-                    compress = compress != 0 ? 1: 0;
+                    compress = !compress;
                     sp++;
                     length--;
-                } else if (compress != 0) {
+                } else if (compress) {
                     tmp[tp++] = buf[offset + sp++];
                     tmp[tp++] = 0;
                     length--;
@@ -270,28 +282,44 @@ public class MdbFile implements Cloneable {
             }
         }
 
-        String text = null;
+        String text;
+        String encoding = null;
         if (isJet3()) {
-            text = new String(pageBuffer, offset, length);
+            encoding = getCharset(buf, offset, length);
+            if (encoding != null) {
+                text = new String(buf, offset, length, Charset.forName(encoding));
         } else {
-            if ((buf[offset] & 0xff) == 0xff && (buf[offset + 1] & 0xff) == 0xfe) { // Byte Order Mark ???
-                UniversalDetector detector = new UniversalDetector(null);
-                detector.handleData(tmp, 0, tmp.length);
-                detector.dataEnd();
-
-                String encoding = detector.getDetectedCharset();
+                text = new String(buf, offset, length, Charset.forName(MdbFile.jet3Encoding));
+            }
+        } else {
+            if ((buf[offset] & 0xff) == 0xff && (buf[offset + 1] & 0xff) == 0xfe) { // compress mark ??? see above
+                encoding = getCharset(tmp, 0, tmp.length);
                 if (encoding != null) {
                     text = new String(tmp, 0, tmp.length, Charset.forName(encoding));
                 } else {
-                    text = new String(tmp, 0, tmp.length, Charset.forName(MdbFile.encoding));
+                    text = new String(tmp, 0, tmp.length, Charset.forName(MdbFile.jet4Encoding));
                 }
             } else {
                 // convert unicode to ascii, rather sloppily
-                text = new String(buf, offset, length, Charset.forName(MdbFile.encoding));
+                encoding = getCharset(buf, offset, length);
+                if (encoding != null) {
+                    text = new String(buf, offset, length, Charset.forName(encoding));
+                } else {
+                    text = new String(buf, offset, length, Charset.forName(MdbFile.jet4Encoding));
+                }
             }
         }
-//System.err.println("here 2: " + StringUtil.getDump(text.getBytes(Charset.forName("utf8"))));
+//Debug.println(Level.FINE, encoding + "\n" + StringUtil.getDump(buf, offset, length));
         return text;
+    }
+
+    static UniversalDetector detector = new UniversalDetector();
+
+    static String getCharset(byte[] buf, int offset, int length) {
+        detector.reset();
+        detector.handleData(buf, offset, length);
+        detector.dataEnd();
+        return detector.getDetectedCharset();
     }
 
     /**
