@@ -8,11 +8,11 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-sql-mdb</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2-SNAPSHOT</version>
 
   <name>Vavi SQL MDB API</name>
   <organization>
-    <name></name>
+    <name>vavi</name>
   </organization>
   <url>https://github.com/umjammer/vavi-sql-mdb</url>
   <description>TODO
@@ -28,7 +28,9 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.10.1</version>
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
@@ -109,6 +111,13 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-params</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.code-intelligence</groupId>
+      <artifactId>jazzer-api</artifactId>
+      <version>0.11.0</version>
       <scope>test</scope>
     </dependency>
 

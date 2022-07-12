@@ -1,18 +1,31 @@
 [![Release](https://jitpack.io/v/umjammer/vavi-sql-mdb.svg)](https://jitpack.io/#umjammer/vavi-sql-mdb)
+[![Actions Status](https://github.com/umjammer/vavi-sql-mdb/workflows/Java%20CI/badge.svg)](https://github.com/umjammer/vavi-sql-mdb/actions)
 
 # mdbtools
 
+access Microsoft Access files directry or by jdbc.
+
 ## TODO
 
-  * 目的を忘れちゃいかんよ、wmp の DB を読むために作ったんやからね。
-      単に JDBC やったら Type 1 とかでいいねんから
-  * ~~jdbc 化~~
-  * memo ケツの 0 で切る？
-  * currency を Currency で実装
+ * don't forget the purpose, because I made it to read the wmp DB.
+  If you just do JDBC, Type 1 is fine.
+ * ~~ jdbc-nize ~~
+   * prepared statement
+   * big decimal
+ * memo: cut with 0 at the last?
+ * currency: implement in java Currency
+ * fuzzing
+   * https://github.com/mdbtools/mdbtools/tree/dev/src/fuzz
+   * https://github.com/CodeIntelligenceTesting/jazzer
+   * https://bazel.build/
 
-## Primary License
+## License
 
+[MDB Tools](https://github.com/mdbtools/mdbtools)
 
-[MDB Tools](https://github.com/cyberemissary/mdbtools)
+> Files in libmdb, libmdbsql, and libmdbodbc are licensed under LGPL and the utilities and gui program are under the GPL, see COPYING.LIB and COPYING files respectively.
 
-> The libraries in MDB Tools (libmdb, libmdbsql, and libmdbodbc) are licensed under the LGPL. The remainder of the software is license under the GPL.
+## References
+
+ * https://github.com/mdbtools/mdbtools
+ * https://github.com/ome/ome-mdbtools
