@@ -20,13 +20,18 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import org.mozilla.universalchardet.UniversalDetector;
-
 import vavi.apps.mdbtools.backend.AccessBackend;
 import vavi.util.Debug;
 
 
 /**
  * MdbFile.
+ * <p>
+ * system properties
+ * <li> mdb.path ... path for database </li>
+ * <li> mdb.jet4.encoding ... for jet4, default UTF-16 </li>
+ * <li> mdb.jet3.encoding ... for jet3, default ISO_8859_1 </li>
+ * </p>
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
@@ -209,11 +214,16 @@ public class MdbFile implements Cloneable {
     private static final int VERSION_JET3 = 0;
     /** */
     private static final int VERSION_JET4 = 1;
+    private static final int MDB_VER_ACCDB_2007 = 0x02;
+    private static final int MDB_VER_ACCDB_2010 = 0x03;
+    private static final int MDB_VER_ACCDB_2013 = 0x04;
+    private static final int MDB_VER_ACCDB_2016 = 0x05;
+    private static final int MDB_VER_ACCDB_2019 = 0x06;
 
     /** */
     public boolean isJet4() {
 //Debug.println("jetVersion: " + mdbFile.jetVersion);
-        return jetVersion == VERSION_JET4;
+        return jetVersion >= VERSION_JET4;
     }
 
     /** */
@@ -241,24 +251,30 @@ public class MdbFile implements Cloneable {
         }
     }
 
-    static final String encoding = "UTF-16LE";
+    static final String jet4Encoding;
+    static final String jet3Encoding;
+
+    static {
+        jet4Encoding = System.getProperty("mdb.jet4.encoding", "UTF-16LE");
+        jet3Encoding = System.getProperty("mdb.jet3.encoding", "ISO_8859_1");
+    }
 
     /** */
     String getJetString(byte[] buf, int offset, int length) {
         byte[] tmp = null;
         int sp = 0;
-        if (!isJet3() && length >= 2 && (buf[offset] & 0xff) == 0xff && (buf[offset + 1] & 0xff) == 0xfe) {
-            int compress = 1;
+        if (!isJet3() && length >= 2 && (buf[offset] & 0xff) == 0xff && (buf[offset + 1] & 0xff) == 0xfe) { // compress?
+            boolean compress = true;
             sp += 2;
             length -= 2;
             tmp = new byte[length * 2];
             int tp = 0;
             while (length > 0) {
                 if (buf[offset + sp] == 0) {
-                    compress = compress != 0 ? 1: 0;
+                    compress = !compress;
                     sp++;
                     length--;
-                } else if (compress != 0) {
+                } else if (compress) {
                     tmp[tp++] = buf[offset + sp++];
                     tmp[tp++] = 0;
                     length--;
@@ -270,28 +286,44 @@ public class MdbFile implements Cloneable {
             }
         }
 
-        String text = null;
+        String text;
+        String encoding = null;
         if (isJet3()) {
-            text = new String(pageBuffer, offset, length);
+            encoding = getCharset(buf, offset, length);
+            if (encoding != null) {
+                text = new String(buf, offset, length, Charset.forName(encoding));
+            } else {
+                text = new String(buf, offset, length, Charset.forName(MdbFile.jet3Encoding));
+            }
         } else {
-            if ((buf[offset] & 0xff) == 0xff && (buf[offset + 1] & 0xff) == 0xfe) { // Byte Order Mark ???
-                UniversalDetector detector = new UniversalDetector(null);
-                detector.handleData(tmp, 0, tmp.length);
-                detector.dataEnd();
-
-                String encoding = detector.getDetectedCharset();
+            if ((buf[offset] & 0xff) == 0xff && (buf[offset + 1] & 0xff) == 0xfe) { // compress mark ??? see above
+                encoding = getCharset(tmp, 0, tmp.length);
                 if (encoding != null) {
                     text = new String(tmp, 0, tmp.length, Charset.forName(encoding));
                 } else {
-                    text = new String(tmp, 0, tmp.length, Charset.forName(MdbFile.encoding));
+                    text = new String(tmp, 0, tmp.length, Charset.forName(MdbFile.jet4Encoding));
                 }
             } else {
                 // convert unicode to ascii, rather sloppily
-                text = new String(buf, offset, length, Charset.forName(MdbFile.encoding));
+                encoding = getCharset(buf, offset, length);
+                if (encoding != null) {
+                    text = new String(buf, offset, length, Charset.forName(encoding));
+                } else {
+                    text = new String(buf, offset, length, Charset.forName(MdbFile.jet4Encoding));
+                }
             }
         }
-//System.err.println("here 2: " + StringUtil.getDump(text.getBytes(Charset.forName("utf8"))));
+//Debug.println(Level.FINE, encoding + "\n" + StringUtil.getDump(buf, offset, length));
         return text;
+    }
+
+    static UniversalDetector detector = new UniversalDetector();
+
+    static String getCharset(byte[] buf, int offset, int length) {
+        detector.reset();
+        detector.handleData(buf, offset, length);
+        detector.dataEnd();
+        return detector.getDetectedCharset();
     }
 
     /**
@@ -315,10 +347,7 @@ public class MdbFile implements Cloneable {
         try {
             MdbFile newMdb = new MdbFile(filename);
             newMdb.stats = null;
-            newMdb.catalogs = new ArrayList<>();
-            for (Catalog catalogEntry : catalogs) {
-                newMdb.catalogs.add(catalogEntry);
-            }
+            newMdb.catalogs = new ArrayList<>(catalogs);
             newMdb.backend = backend;
             referencesCount++;
             return newMdb;
@@ -399,6 +428,7 @@ public class MdbFile implements Cloneable {
         } else {
             this.formats = jet3Constants;
         }
+//Debug.println("is4: " + isJet4() + ", " + this.jetVersion + ", " + getPageSize());
 
         // get the db encryption key and xor it back to clear text
         this.key = readInt(0x3e);
@@ -454,21 +484,21 @@ public class MdbFile implements Cloneable {
         if (this.raFile.length() < offset) {
 //Debug.println(String.format("offset %08x is beyond EOF: %08x", offset, page));
 //            return 0;
-            throw new IllegalArgumentException(String.format("offset %08x is beyond EOF: %08x", offset, page));
+            throw new IllegalArgumentException(String.format("offset %1$08x(%1$d) is beyond EOF: page: %2$08x(%2$d)", offset, page));
         }
         if (stats != null && stats.collect) {
             stats.pageReads++;
         }
 
-        raFile.seek(offset);    // SEEK_SET
+        raFile.seek(offset); // SEEK_SET
         int length = raFile.read(buffer, 0, getPageSize());
         if (length == -1) {
             throw new EOFException("unexpected EOF");
         } else if (length < getPageSize()) {
             throw new EOFException("EOF reached " + length + " bytes returned. " + getPageSize());
         }
-//Debug.println("page: " + page + ": " + length + " bytes:\n");
-//Debug.println("page: " + page + ": " + length + " bytes:\n" + StringUtil.getDump(buffer, 64));
+//Debug.println("page: " + page + ": offset: " + offset + ", length: " + length + " bytes:\n");
+//Debug.println("page: " + page + ": " + offset + ", " + length + " bytes:\n" + StringUtil.getDump(buffer, 4));
         return length;
     }
 
@@ -529,13 +559,13 @@ public class MdbFile implements Cloneable {
     int read32Bit(byte[] buffer, int offset) {
         long l = 0;
 
-        l |= (buffer[offset + 3] & 0xff) << 24;
+        l |= (buffer[offset + 3] & 0xffL) << 24;
         l |= (buffer[offset + 2] & 0xff) << 16;
         l |= (buffer[offset + 1] & 0xff) << 8;
         l |= (buffer[offset    ] & 0xff);
 
 //Debug.println("offset: " + StringUtil.toHex4(offset) + "(" + offset + "): " + StringUtil.toHex8(l) + "(" + l + ")");
-        return (int) (l & 0xffffffff);
+        return (int) (l & 0xffff_ffffL);
     }
 
     /** */
@@ -620,7 +650,7 @@ public class MdbFile implements Cloneable {
         len[0] = next_start - (start[0] & OFFSET_MASK);
     }
 
-    //---- index
+    // index
 
     /**
      * find the next leaf page if any given a chain. Assumes any exhausted
@@ -643,12 +673,12 @@ public class MdbFile implements Cloneable {
         int passed = 0;
         do {
             indexPage.length = 0;
-//System.err.println("finding next on pg " + ipg.pg);
+//Debug.println("finding next on pg " + ipg.pg);
             if (indexPage.findNextOnPage(this) == 0) {
                 return null;
             }
             int pg = read24BitMsb(indexPage.offset + indexPage.length - 3);
-//System.err.println("Looking at pg " + pg + " at " + ipg.offset + " " + ipg.len);
+//Debug.println("Looking at pg " + pg + " at " + ipg.offset + " " + ipg.len);
             indexPage.offset += indexPage.length;
 
             // add to the chain and call this function recursively.
@@ -656,7 +686,7 @@ public class MdbFile implements Cloneable {
             pages.add(newipg);
             newipg.page = pg;
             newipg = find_next_leaf(pages);
-//System.err.println("returning pg " + newipg.pg);
+//Debug.println("returning pg " + newipg.pg);
             return newipg;
         } while (passed == 0);
     }
@@ -673,11 +703,10 @@ public class MdbFile implements Cloneable {
      * text columns may return false positives due to hashing and non-index
      * columns with sarg values can't be tested here.
      */
-    int index_find_next(Index index, List<IndexPage> pages, int[] page, int[] row)
-        throws IOException {
+    int index_find_next(Index index, List<IndexPage> pages, int[] page, int[] row) throws IOException {
 
-        boolean passed = false;
-        IndexPage indexPage = null;
+        boolean passed;
+        IndexPage indexPage;
         // if it's new use the root index page (idx.first_pg)
         if (pages.size() == 0) {
             indexPage = new IndexPage();
@@ -698,7 +727,7 @@ public class MdbFile implements Cloneable {
             indexPage.length = 0;
             // if no more rows on this leaf, try to find a new leaf
             if (indexPage.findNextOnPage(this) == 0) {
-//System.err.println("page " + ipg.pg + " finished");
+//Debug.println("page " + ipg.pg + " finished");
                 if (pages.size() == 1) {
                     return 0;
                 }
@@ -728,7 +757,7 @@ public class MdbFile implements Cloneable {
         return indexPage.length;
     }
 
-    //---- stats
+    // stats
 
     /** */
     void stats_on() {
@@ -756,7 +785,7 @@ public class MdbFile implements Cloneable {
 Debug.println("Physical Page Reads: " + stats.pageReads);
     }
 
-    //---- data
+    // data
 
     /**
      * Search the previous "row start" values for the first non-deleted
@@ -779,7 +808,7 @@ Debug.println("Physical Page Reads: " + stats.pageReads);
     /** loop over each entry in the catalog */
     public Table getTable(String name) throws IOException {
         for (Catalog catalog : this.catalogs) {
-//System.err.println(catalog.name + ", " + name + ", " + catalog.name.equals(name));
+//Debug.println(catalog.name + ", " + name + ", " + catalog.name.equals(name));
             if (catalog.type == Catalog.Type.TABLE && catalog.name.equals(name)) {
                 return new Table(catalog);
             }
@@ -805,7 +834,7 @@ Debug.println("Physical Page Reads: " + stats.pageReads);
         // szReferencedColumn contains the column name of the parent table
         // szReferencedObject contains the table name of the parent table
 
-        /** */
+        //
         Table table = getTable("MSysRelationships");
         for (Object[] values : table.fetchRows()) {
             for (int i = 0; i < values.length; i++) {

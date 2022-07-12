@@ -30,42 +30,36 @@ public class Driver implements java.sql.Driver {
     /** */
     static final String SCHEMA = "jdbc:mdb:";
 
-    /** */
     @Override
     public java.sql.Connection connect(String urlString, Properties props)
         throws SQLException {
 
-        java.sql.Connection connection = new Connection();
-        ((Connection) connection).connect(urlString, props);
+        Connection connection = new Connection();
+        connection.connect(urlString, props);
 
         return connection;
     }
 
-    /** */
     @Override
     public boolean acceptsURL(String url) {
         return url.startsWith(SCHEMA );
     }
 
-    /** */
     @Override
     public DriverPropertyInfo[] getPropertyInfo(String urlString, Properties props) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
     @Override
     public int getMajorVersion() {
         return MAJOR_VERSION;
     }
 
-    /** */
     @Override
     public int getMinorVersion() {
         return MINOR_VERSION;
     }
 
-    /** */
     @Override
     public boolean jdbcCompliant() {
         return false;

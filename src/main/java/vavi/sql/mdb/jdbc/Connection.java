@@ -12,7 +12,6 @@ import java.sql.Blob;
 import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.NClob;
-import java.sql.PreparedStatement;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -49,51 +48,51 @@ public class Connection implements java.sql.Connection {
 
     private String url;
 
-    MdbFile mdb;
+    private Engine engine;
 
-    /** */
+    @Override
     public java.sql.Statement createStatement() throws SQLException {
-        return new Statement(this);
+        return new Statement(engine);
     }
 
-    /** */
+    @Override
     public java.sql.PreparedStatement prepareStatement(String sql) throws SQLException {
-
-        throw new UnsupportedOperationException("Not implemented.");
+        return new PreparedStatement(engine, sql);
     }
 
-    /** TODO */
+    @Override
     public java.sql.PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
-
-        throw new UnsupportedOperationException("Not implemented.");
+        return new PreparedStatement(engine, sql, columnNames);
     }
 
-    /** */
+    @Override
     public java.sql.CallableStatement prepareCall(String sql) throws SQLException {
 
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public String nativeSQL(String sql) throws SQLException {
         return sql;
     }
 
-    /** */
+    @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
         this.autoCommit = autoCommit;
     }
 
-    /** */
+    @Override
     public boolean getAutoCommit() throws SQLException {
         return autoCommit;
     }
 
     /** TODO */
+    @Override
     public void commit() throws SQLException {
     }
 
     /** TODO */
+    @Override
     public void rollback() throws SQLException {
     }
 
@@ -115,92 +114,92 @@ public class Connection implements java.sql.Connection {
 Debug.println(Level.FINE, "url: " + url + ", " + filename);
 
         try {
-            this.mdb = new MdbFile(filename);
+            this.engine = new Engine(new MdbFile(filename));
         } catch (IOException e) {
             throw new SQLException(e);
         }
     }
 
-    /** */
+    @Override
     public void close() throws SQLException {
         this.connectionClosed = true;
     }
 
-    /** */
+    @Override
     public boolean isClosed() throws SQLException {
         return connectionClosed;
     }
 
-    /** */
+    @Override
     public java.sql.DatabaseMetaData getMetaData() throws SQLException {
         return new DatabaseMetaData(url);
     }
 
-    /** */
+    @Override
     public void setReadOnly(boolean readOnly) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public boolean isReadOnly() throws SQLException {
         return false;
     }
 
-    /** */
+    @Override
     public void setCatalog(String catalog) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public String getCatalog() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public void setTransactionIsolation(int level) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public int getTransactionIsolation() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public SQLWarning getWarnings() throws SQLException {
         return null;
     }
 
-    /** */
+    @Override
     public void clearWarnings() throws SQLException {
     }
 
-    /** */
+    @Override
     public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public java.sql.PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public Map<String, Class<?>> getTypeMap() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** */
+    @Override
     public Savepoint setSavepoint(String name) {
         return null;
     }

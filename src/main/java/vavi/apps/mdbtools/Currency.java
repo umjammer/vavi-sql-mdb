@@ -113,7 +113,7 @@ public class Currency {
 
         j = 0;
         char[] s = new char[100];
-        /** @todo find a better number */
+        // TODO find a better number
         for (i = top; i >= 0; i--) {
             if (top + 1 - j == scale)
                 s[j++] = '.';

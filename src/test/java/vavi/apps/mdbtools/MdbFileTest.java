@@ -7,12 +7,20 @@
 package vavi.apps.mdbtools;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static com.rainerhahnekamp.sneakythrow.Sneaky.sneaked;
 
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 
 /**
@@ -23,11 +31,69 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 public class MdbFileTest {
 
-    @Test
-    public void test() {
-        fail("Not yet implemented");
+    static Stream<Arguments> sources() throws IOException {
+        return Files.list(Paths.get("src/test/resources/")).filter(p -> p.toString().endsWith(".mdb")).map(p -> arguments(p));
     }
 
+    @ParameterizedTest
+    @MethodSource("sources")
+    void test0(Path p) throws Exception {
+        MdbFile mdb = new MdbFile(p.toString());
+//Debug.println(StringUtil.paramStringDeep(mdb, 2));
+
+        mdb.catalogs.forEach(sneaked(catalog -> {
+            if (catalog.isUserTable()) {
+                Table table = mdb.getTable(catalog.name);
+                System.err.println(String.join(", ", table.columns.stream().map(c -> c.type.name()).toArray(String[]::new)));
+                System.out.println(String.join(", ", table.columns.stream().map(c -> c.name).toArray(String[]::new)));
+                System.out.println();
+                for (Object[] values : table.fetchRows()) {
+                    for (Object value : values) {
+                        System.out.print(value + ", ");
+                    }
+                    System.out.println();
+                }
+            }
+        }));
+    }
+
+    @Test
+    void test1() throws Exception {
+        Path p = Paths.get(MdbFileTest.class.getResource("/nwind.mdb").toURI());
+        MdbFile mdb = new MdbFile(p.toString());
+
+        mdb.catalogs.forEach(sneaked(catalog -> {
+            if (catalog.isUserTable()) {
+                Table table = mdb.getTable(catalog.name);
+                System.out.println(table.name);
+                System.err.println(String.join(", ", table.columns.stream().map(c -> c.type.name()).toArray(String[]::new)));
+                System.out.println(String.join(", ", table.columns.stream().map(c -> c.name).toArray(String[]::new)));
+                System.out.println();
+            }
+        }));
+    }
+
+    @Test
+    void test2() throws Exception {
+        Path p = Paths.get(MdbFileTest.class.getResource("/ASampleDatabase.accdb").toURI());
+        MdbFile mdb = new MdbFile(p.toString());
+
+        mdb.catalogs.forEach(sneaked(catalog -> {
+            if (catalog.isUserTable()) {
+                Table table = mdb.getTable(catalog.name);
+                System.out.println(table.name);
+                System.err.println(String.join(", ", table.columns.stream().map(c -> c.type.name()).toArray(String[]::new)));
+                System.out.println(String.join(", ", table.columns.stream().map(c -> c.name).toArray(String[]::new)));
+                System.out.println();
+                for (Object[] values : table.fetchRows()) {
+                    for (Object value : values) {
+                        System.out.print(value + ", ");
+                    }
+                    System.out.println();
+                }
+            }
+        }));
+    }
     //----
 
     /** */

@@ -46,7 +46,7 @@ class IndexPage {
      */
     public int findNextOnPage(MdbFile mdb) {
         do {
-//System.err.println(ipg.mask_bit + " " + ipg.mask_byte);
+//Debug.println(ipg.mask_bit + " " + ipg.mask_byte);
             mask_bit++;
             if (mask_bit == 8) {
                 mask_bit = 0;
