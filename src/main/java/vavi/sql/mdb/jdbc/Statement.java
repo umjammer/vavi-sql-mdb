@@ -91,27 +91,23 @@ public class Statement implements java.sql.Statement {
 
     @Override
     public int getMaxFieldSize() throws SQLException {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setMaxFieldSize(int max) throws SQLException {
-        if (max != 0) {
             throw new UnsupportedOperationException("Not implemented.");
         }
-    }
 
     @Override
     public int getMaxRows() throws SQLException {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setMaxRows(int max) throws SQLException {
-        if (max != 0) {
             throw new UnsupportedOperationException("Not implemented.");
         }
-    }
 
     @Override
     public void setEscapeProcessing(boolean enable) throws SQLException {
@@ -120,7 +116,7 @@ public class Statement implements java.sql.Statement {
 
     @Override
     public int getQueryTimeout() throws SQLException {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
@@ -132,6 +128,7 @@ public class Statement implements java.sql.Statement {
 
     @Override
     public void cancel() throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
@@ -156,12 +153,12 @@ public class Statement implements java.sql.Statement {
 
     @Override
     public boolean execute(String sql, String[] x) throws SQLException {
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean execute(String sql, int[] x) throws SQLException {
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
@@ -172,7 +169,7 @@ public class Statement implements java.sql.Statement {
     /** TODO */
     @Override
     public int getUpdateCount() throws SQLException {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
@@ -232,79 +229,67 @@ public class Statement implements java.sql.Statement {
 
     @Override
     public java.sql.ResultSet getGeneratedKeys() {
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public int getResultSetHoldability() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean getMoreResults(int arg0) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public int executeUpdate(String arg0, int arg1) throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean execute(String arg0, int arg1) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public int executeUpdate(String arg0, int[] arg1) throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean isClosed() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean isPoolable() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setPoolable(boolean poolable) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void closeOnCompletion() throws SQLException {
-        // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean isCloseOnCompletion() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 }
 

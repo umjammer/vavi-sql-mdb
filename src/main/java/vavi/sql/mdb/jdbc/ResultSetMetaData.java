@@ -133,14 +133,12 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 }
 

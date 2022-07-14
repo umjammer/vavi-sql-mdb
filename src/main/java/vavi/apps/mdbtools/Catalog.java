@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import vavi.util.Debug;
-import vavi.util.StringUtil;
 
 
 /**
@@ -39,7 +38,7 @@ class Catalog {
         UNKNOWN_0A(10),
         DATABASE_PROPERTY(11),
         ANY(-1);
-        int value;
+        final int value;
         Type(int value) {
             this.value = value;
         }
@@ -54,7 +53,7 @@ class Catalog {
             }
             throw new IllegalArgumentException(String.valueOf(value));
         }
-    };
+    }
 
     /** */
     MdbFile mdb;

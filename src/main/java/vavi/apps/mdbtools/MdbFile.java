@@ -40,7 +40,7 @@ public class MdbFile implements Cloneable {
 
     static final int PAGE_SIZE = 4096;
 
-    class Statistics {
+    static class Statistics {
         boolean collect;
         long pageReads;
     }
@@ -839,14 +839,19 @@ Debug.println("Physical Page Reads: " + stats.pageReads);
         for (Object[] values : table.fetchRows()) {
             for (int i = 0; i < values.length; i++) {
                 Column column = table.columns.get(i);
-                if (column.name.equals("szColumn")) {
+                switch (column.name) {
+                case "szColumn":
                     relationships[0] = String.valueOf(values[i]);
-                } else if (column.name.equals("szObject")) {
+                    break;
+                case "szObject":
                     relationships[1] = String.valueOf(values[i]);
-                } else if (column.name.equals("szReferencedColumn")) {
+                    break;
+                case "szReferencedColumn":
                     relationships[2] = String.valueOf(values[i]);
-                } else if (column.name.equals("szReferencedObject")) {
+                    break;
+                case "szReferencedObject":
                     relationships[3] = String.valueOf(values[i]);
+                    break;
                 }
             }
             text = backend.getRelationshipString(relationships);
