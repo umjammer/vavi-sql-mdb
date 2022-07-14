@@ -25,7 +25,7 @@ public class Driver implements java.sql.Driver {
     static final int MAJOR_VERSION = 0;
 
     /** */
-    static final int MINOR_VERSION = 0;
+    static final int MINOR_VERSION = 3;
 
     /** */
     static final String SCHEMA = "jdbc:mdb:";

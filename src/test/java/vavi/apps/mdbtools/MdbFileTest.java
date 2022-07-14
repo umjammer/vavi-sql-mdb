@@ -19,7 +19,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import static com.rainerhahnekamp.sneakythrow.Sneaky.sneaked;
 
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 
@@ -32,7 +31,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 public class MdbFileTest {
 
     static Stream<Arguments> sources() throws IOException {
-        return Files.list(Paths.get("src/test/resources/")).filter(p -> p.toString().endsWith(".mdb")).map(p -> arguments(p));
+        return Files.list(Paths.get("src/test/resources/")).filter(p -> p.toString().endsWith(".mdb")).map(Arguments::arguments);
     }
 
     @ParameterizedTest

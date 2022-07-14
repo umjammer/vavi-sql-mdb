@@ -13,7 +13,6 @@ import java.net.URL;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
-import java.sql.Connection;
 import java.sql.Date;
 import java.sql.NClob;
 import java.sql.ParameterMetaData;
@@ -37,6 +36,14 @@ import java.util.Map;
  * @version 0.00 040620 nsano initial version <br>
  */
 public class CallableStatement implements java.sql.CallableStatement {
+
+    /**  */
+    private Connection connection;
+
+    /**  */
+    public CallableStatement(Connection connection, String sql) {
+        this.connection = connection;
+    }
 
     @Override
     public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {

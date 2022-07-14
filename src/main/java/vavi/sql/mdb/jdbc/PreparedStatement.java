@@ -6,6 +6,7 @@
 
 package vavi.sql.mdb.jdbc;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -13,7 +14,6 @@ import java.net.URL;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
-import java.sql.Connection;
 import java.sql.Date;
 import java.sql.NClob;
 import java.sql.ParameterMetaData;
@@ -27,6 +27,8 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+
+import vavi.sql.Engine;
 
 
 /**
@@ -44,7 +46,7 @@ public class PreparedStatement implements java.sql.PreparedStatement {
     private String[] columnNames;
 
     /** */
-    private java.sql.ResultSet currentResultSet;
+    private ResultSet currentResultSet;
 
     /** */
     private Engine engine;
@@ -53,26 +55,24 @@ public class PreparedStatement implements java.sql.PreparedStatement {
     private String sql;
 
     /** */
-    public PreparedStatement(Engine engine, String sql) {
-        this.engine = engine;
+    private Connection connection;
+
+    /** */
+    public PreparedStatement(Connection connection, String sql) {
+        this.connection = connection;
+        this.engine = connection.engine();
         this.sql = sql;
     }
 
     /** */
-    public PreparedStatement(Engine engine, String sql, String[] columnNames) {
-        this(engine, sql);
+    public PreparedStatement(Connection connection, String sql, String[] columnNames) {
+        this(connection, sql);
         this.columnNames = columnNames;
     }
 
     @Override
     public java.sql.ResultSet executeQuery() throws SQLException {
-        if (!execute()) {
-            return null;
-        }
-
-        this.currentResultSet = this.getResultSet();
-
-        return currentResultSet;
+        return executeQuery(sql);
     }
 
     @Override
@@ -82,12 +82,18 @@ public class PreparedStatement implements java.sql.PreparedStatement {
 
     @Override
     public boolean execute() throws SQLException {
-        return engine.excute(sql);
+        try {
+            boolean r = engine.execute(sql, params);
+            this.currentResultSet = new ResultSet(engine.result());
+            return r;
+        } catch (IOException e) {
+            throw new SQLException(e);
+        }
     }
 
     @Override
     public java.sql.ResultSet getResultSet() throws SQLException {
-        return new ResultSet(engine.getValues());
+        return this.currentResultSet;
     }
 
     @Override
@@ -96,15 +102,17 @@ public class PreparedStatement implements java.sql.PreparedStatement {
     }
 
     @Override
-    public boolean execute(String arg0, String[] arg1) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean execute(String sql, String[] columnNames) throws SQLException {
+        this.sql = sql;
+        this.columnNames = columnNames;
+        return execute();
     }
 
     @Override
-    public ResultSet executeQuery(String arg0) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+    public java.sql.ResultSet executeQuery(String sql) throws SQLException {
+        this.sql = sql;
+        execute();
+        return currentResultSet;
     }
 
     @Override

@@ -74,7 +74,10 @@ public class Table {
     /** */
     byte[] indexUsageMap;
 
+    public List<Column> getColumns() {
+        return columns;
     }
+
     /** */
     private Comparator<Column> columnComparator = (c1, c2) -> c1.number - c2.number;
 

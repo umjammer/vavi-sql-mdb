@@ -23,8 +23,11 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+
+import vavi.sql.ResultSettable;
+import vavi.util.Debug;
 
 
 /**
@@ -36,7 +39,7 @@ import java.util.Map;
 public class ResultSet implements java.sql.ResultSet {
 
     /** */
-    List<Object[]> valueList;
+    ResultSettable resultSettable;
 
     /** */
     boolean opened = false;
@@ -45,14 +48,19 @@ public class ResultSet implements java.sql.ResultSet {
     int index = -1;
 
     /** */
-    public ResultSet(List<Object[]> valueList) {
-        this.valueList = valueList;
+    public ResultSet(ResultSettable resultSettable) {
+        this.resultSettable = resultSettable;
         this.opened = true;
     }
 
     @Override
     public boolean next() throws SQLException {
-        return index++ < valueList.size() - 1;
+        if (index + 1 <= resultSettable.getValues().size() - 1) {
+            index++;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -68,7 +76,7 @@ public class ResultSet implements java.sql.ResultSet {
     @Override
     public String getString(int columnIndex) throws SQLException {
         if (opened) {
-            return (String) valueList.get(index)[columnIndex - 1];
+            return (String) resultSettable.getValues().get(index)[columnIndex - 1];
         } else {
             throw new SQLException("closed");
         }
@@ -76,23 +84,35 @@ public class ResultSet implements java.sql.ResultSet {
 
     @Override
     public boolean getBoolean(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (opened) {
+            return (Boolean) resultSettable.getValues().get(index)[columnIndex - 1];
+        } else {
+            throw new SQLException("closed");
+        }
     }
 
     @Override
     public byte getByte(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (opened) {
+            return (Byte) resultSettable.getValues().get(index)[columnIndex - 1];
+        } else {
+            throw new SQLException("closed");
+        }
     }
 
     @Override
     public short getShort(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (opened) {
+            return (Short) resultSettable.getValues().get(index)[columnIndex - 1];
+        } else {
+            throw new SQLException("closed");
+        }
     }
 
     @Override
     public int getInt(int columnIndex) throws SQLException {
         if (opened) {
-            return (Integer) valueList.get(index)[columnIndex - 1];
+            return (Integer) resultSettable.getValues().get(index)[columnIndex - 1];
         } else {
             throw new SQLException("closed");
         }
@@ -100,44 +120,76 @@ public class ResultSet implements java.sql.ResultSet {
 
     @Override
     public long getLong(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (opened) {
+            return (Long) resultSettable.getValues().get(index)[columnIndex - 1];
+        } else {
+            throw new SQLException("closed");
+        }
     }
 
     @Override
     public float getFloat(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (opened) {
+            return (Float) resultSettable.getValues().get(index)[columnIndex - 1];
+        } else {
+            throw new SQLException("closed");
+        }
     }
 
     @Override
     public double getDouble(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (opened) {
+            return (Double) resultSettable.getValues().get(index)[columnIndex - 1];
+        } else {
+            throw new SQLException("closed");
+        }
     }
 
     /**
      * @deprecated
      */
     public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (opened) {
+            return (BigDecimal) resultSettable.getValues().get(index)[columnIndex - 1];
+        } else {
+            throw new SQLException("closed");
+        }
     }
 
     @Override
     public byte[] getBytes(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (opened) {
+            return (byte[]) resultSettable.getValues().get(index)[columnIndex - 1];
+        } else {
+            throw new SQLException("closed");
+        }
     }
 
     @Override
     public java.sql.Date getDate(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (opened) {
+            return (java.sql.Date) resultSettable.getValues().get(index)[columnIndex - 1];
+        } else {
+            throw new SQLException("closed");
+        }
     }
 
     @Override
     public java.sql.Time getTime(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (opened) {
+            return (java.sql.Time) resultSettable.getValues().get(index)[columnIndex - 1];
+        } else {
+            throw new SQLException("closed");
+        }
     }
 
     @Override
     public java.sql.Timestamp getTimestamp(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (opened) {
+            return (java.sql.Timestamp) resultSettable.getValues().get(index)[columnIndex - 1];
+        } else {
+            throw new SQLException("closed");
+        }
     }
 
     @Override
@@ -157,64 +209,118 @@ public class ResultSet implements java.sql.ResultSet {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    @Override
-    public String getString(String columnName) throws SQLException {
+    /** */
+    private int indexOf(String columnName) throws SQLException {
         java.sql.ResultSetMetaData rsmd = getMetaData();
 
-        for (int index = 1; index < rsmd.getColumnCount(); index++) {
+        for (int index = 1; index <= rsmd.getColumnCount(); index++) {
             String strName = rsmd.getColumnName(index);
 
-            if (strName.compareToIgnoreCase(columnName) == 0) {
-                return getString(index);
+            if (strName.equalsIgnoreCase(columnName)) {
+                return index;
             }
         }
+Debug.println(Level.WARNING, columnName);
+        return -1;
+    }
 
-        throw new SQLException("not found column: " + columnName);
+    @Override
+    public String getString(String columnName) throws SQLException {
+        int index = indexOf(columnName);
+        if (index > 0) {
+            return getString(index);
+        } else {
+            throw new SQLException("not found column: " + columnName);
+        }
     }
 
     @Override
     public boolean getBoolean(String columnName) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        int index = indexOf(columnName);
+        if (index > 0) {
+            return getBoolean(index);
+        } else {
+            throw new SQLException("not found column: " + columnName);
+        }
     }
 
     @Override
     public byte getByte(String columnName) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        int index = indexOf(columnName);
+        if (index > 0) {
+            return getByte(index);
+        } else {
+            throw new SQLException("not found column: " + columnName);
+        }
     }
 
     @Override
     public short getShort(String columnName) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        int index = indexOf(columnName);
+        if (index > 0) {
+            return getShort(index);
+        } else {
+            throw new SQLException("not found column: " + columnName);
+        }
     }
 
     @Override
     public int getInt(String columnName) throws SQLException {
-        java.sql.ResultSetMetaData rsmd = getMetaData();
-
-        for (int index = 1; index < rsmd.getColumnCount(); index++) {
-            String strName = rsmd.getColumnName(index);
-
-            if (strName.compareToIgnoreCase(columnName) == 0) {
-                return getInt(index);
-            }
+        int index = indexOf(columnName);
+        if (index > 0) {
+            return getInt(index);
+        } else {
+            throw new SQLException("not found column: " + columnName);
         }
-
-        throw new SQLException("not found column: " + columnName);
     }
 
     @Override
     public long getLong(String columnName) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        int index = indexOf(columnName);
+        if (index > 0) {
+            return getLong(index);
+        } else {
+            throw new SQLException("not found column: " + columnName);
+        }
     }
 
     @Override
     public float getFloat(String columnName) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        int index = indexOf(columnName);
+        if (index > 0) {
+            return getFloat(index);
+        } else {
+            throw new SQLException("not found column: " + columnName);
+        }
     }
 
     @Override
     public double getDouble(String columnName) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        int index = indexOf(columnName);
+        if (index > 0) {
+            return getDouble(index);
+        } else {
+            throw new SQLException("not found column: " + columnName);
+        }
+    }
+
+    @Override
+    public Object getObject(int columnIndex) throws SQLException {
+        if (opened) {
+            return resultSettable.getValues().get(index)[columnIndex - 1];
+        } else {
+            throw new SQLException("closed");
+        }
+    }
+
+    @Override
+    public Object getObject(String columnName) throws SQLException {
+        int index = indexOf(columnName);
+        if (index > 0) {
+            return getObject(index);
+        } else {
+            throw new SQLException("not found column: " + columnName);
+        }
     }
 
     /**
@@ -226,7 +332,12 @@ public class ResultSet implements java.sql.ResultSet {
 
     @Override
     public byte[] getBytes(String columnName) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        int index = indexOf(columnName);
+        if (index > 0) {
+            return getBytes(index);
+        } else {
+            throw new SQLException("not found column: " + columnName);
+        }
     }
 
     @Override
@@ -278,17 +389,7 @@ public class ResultSet implements java.sql.ResultSet {
 
     @Override
     public java.sql.ResultSetMetaData getMetaData() throws SQLException {
-        return new ResultSetMetaData(this);
-    }
-
-    @Override
-    public Object getObject(int columnIndex) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
-    }
-
-    @Override
-    public Object getObject(String columnName) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return new ResultSetMetaData(this.resultSettable);
     }
 
     @Override
@@ -309,7 +410,7 @@ public class ResultSet implements java.sql.ResultSet {
     @Override
     public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
         if (opened) {
-            return (BigDecimal) valueList.get(index)[columnIndex - 1];
+            return (BigDecimal) resultSettable.getValues().get(index)[columnIndex - 1];
         } else {
             throw new SQLException("closed");
         }
@@ -332,12 +433,12 @@ public class ResultSet implements java.sql.ResultSet {
 
     @Override
     public boolean isFirst() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return index == 0;
     }
 
     @Override
     public boolean isLast() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return index == resultSettable.getValues().size() - 1;
     }
 
     @Override
@@ -352,32 +453,49 @@ public class ResultSet implements java.sql.ResultSet {
 
     @Override
     public boolean first() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        index = 0;
+        return true;
     }
 
     @Override
     public boolean last() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        index = resultSettable.getValues().size() - 1;
+        return true;
     }
 
     @Override
     public int getRow() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return index;
     }
 
     @Override
     public boolean absolute(int row) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (0 <= row && row <= resultSettable.getValues().size() - 1) {
+            index = row;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean relative(int rows) throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (0 <= index + rows && index + rows <= resultSettable.getValues().size() - 1) {
+            index += rows;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
     public boolean previous() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        if (index - 1 >= 0) {
+            index--;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -387,7 +505,7 @@ public class ResultSet implements java.sql.ResultSet {
 
     @Override
     public int getFetchDirection() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return ResultSet.FETCH_FORWARD;
     }
 
     @Override

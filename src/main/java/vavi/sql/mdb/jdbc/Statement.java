@@ -6,10 +6,11 @@
 
 package vavi.sql.mdb.jdbc;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 
-import vavi.apps.mdbtools.MdbFile;
+import vavi.sql.Engine;
 
 
 /**
@@ -21,19 +22,18 @@ import vavi.apps.mdbtools.MdbFile;
 public class Statement implements java.sql.Statement {
 
     /** */
-    private Engine engine = null;
+    private Engine engine;
 
     /** */
     private java.sql.ResultSet currentResultSet = null;
 
     /** */
-    public void setEngine(Engine engine) {
-        this.engine = engine;
-    }
+    private Connection connection;
 
     /** */
-    public Statement(Engine engine) {
-        this.engine = engine;
+    public Statement(Connection connection) {
+        this.connection = connection;
+        this.engine = connection.engine();
     }
 
     @Override
@@ -51,7 +51,7 @@ public class Statement implements java.sql.Statement {
             return null;
         }
 
-        currentResultSet = new ResultSet(engine.getValues());
+        currentResultSet = new ResultSet(engine.result());
 
         return currentResultSet;
     }
@@ -96,8 +96,8 @@ public class Statement implements java.sql.Statement {
 
     @Override
     public void setMaxFieldSize(int max) throws SQLException {
-            throw new UnsupportedOperationException("Not implemented.");
-        }
+        throw new UnsupportedOperationException("Not implemented.");
+    }
 
     @Override
     public int getMaxRows() throws SQLException {
@@ -106,8 +106,8 @@ public class Statement implements java.sql.Statement {
 
     @Override
     public void setMaxRows(int max) throws SQLException {
-            throw new UnsupportedOperationException("Not implemented.");
-        }
+        throw new UnsupportedOperationException("Not implemented.");
+    }
 
     @Override
     public void setEscapeProcessing(boolean enable) throws SQLException {
@@ -148,7 +148,11 @@ public class Statement implements java.sql.Statement {
 
     @Override
     public boolean execute(String sql) throws SQLException {
-        return engine.excute(sql);
+        try {
+            return engine.execute(sql);
+        } catch (IOException e) {
+            throw new SQLException(e);
+        }
     }
 
     @Override

@@ -7,9 +7,9 @@
 package vavi.sql.mdb.jdbc;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.sql.Array;
 import java.sql.Blob;
-import java.sql.CallableStatement;
 import java.sql.Clob;
 import java.sql.NClob;
 import java.sql.SQLClientInfoException;
@@ -18,12 +18,16 @@ import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Struct;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
 import vavi.apps.mdbtools.MdbFile;
+import vavi.apps.mdbtools.Table;
+import vavi.sql.Engine;
+import vavi.sql.ResultSettable;
 import vavi.util.Debug;
 
 
@@ -41,34 +45,52 @@ public class Connection implements java.sql.Connection {
     /** */
     private boolean connectionClosed = true;
 
-    /**
-     * 自動コミットを行うかどうか。デフォルトは ON
-     */
+    /** */
     private boolean autoCommit = true;
 
     private String url;
 
-    private Engine engine;
+    private MdbFile mdb;
+
+    public Engine engine() {
+        return new Engine(new ResultSettable() {
+            private String table;
+
+            @Override
+            public void setTable(String table) {
+                this.table = table;
+            }
+
+            @Override
+            public List<Object[]> getValues() {
+                try {
+                    Table table = mdb.getTable(this.table);
+                    return table.fetchRows();
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        }, getMetaData());
+    }
 
     @Override
     public java.sql.Statement createStatement() throws SQLException {
-        return new Statement(engine);
+        return new Statement(this);
     }
 
     @Override
     public java.sql.PreparedStatement prepareStatement(String sql) throws SQLException {
-        return new PreparedStatement(engine, sql);
+        return new PreparedStatement(this, sql);
     }
 
     @Override
     public java.sql.PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
-        return new PreparedStatement(engine, sql, columnNames);
+        return new PreparedStatement(this, sql, columnNames);
     }
 
     @Override
     public java.sql.CallableStatement prepareCall(String sql) throws SQLException {
-
-        throw new UnsupportedOperationException("Not implemented.");
+        return new CallableStatement(this, sql);
     }
 
     @Override
@@ -114,7 +136,7 @@ public class Connection implements java.sql.Connection {
 Debug.println(Level.FINE, "url: " + url + ", " + filename);
 
         try {
-            this.engine = new Engine(new MdbFile(filename));
+            this.mdb = new MdbFile(filename);
         } catch (IOException e) {
             throw new SQLException(e);
         }
@@ -131,8 +153,8 @@ Debug.println(Level.FINE, "url: " + url + ", " + filename);
     }
 
     @Override
-    public java.sql.DatabaseMetaData getMetaData() throws SQLException {
-        return new DatabaseMetaData(url);
+    public java.sql.DatabaseMetaData getMetaData() {
+        return new DatabaseMetaData(url, mdb);
     }
 
     @Override

@@ -6,9 +6,17 @@
 
 package vavi.sql.mdb.jdbc;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import vavi.apps.mdbtools.MdbFile;
+import vavi.sql.ResultSettable;
 
 
 /**
@@ -19,10 +27,12 @@ import java.sql.SQLException;
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
-    String url;
+    private String url;
+    private MdbFile mdb;
 
-    public DatabaseMetaData(String url) {
+    public DatabaseMetaData(String url, MdbFile mdb) {
         this.url = url;
+        this.mdb = mdb;
     }
 
     @Override
@@ -37,7 +47,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public String getURL() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return url;
     }
 
     @Override
@@ -102,12 +112,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public boolean usesLocalFiles() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return true;
     }
 
     @Override
     public boolean usesLocalFilePerTable() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return false;
     }
 
     @Override
@@ -660,9 +670,30 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     @Override
     public ResultSet getColumns(String catalog, String schemaPattern,
                                 String tableNamePattern,
-                                String columnNamePattern)
-        throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+                                String columnNamePattern) throws SQLException {
+        return new vavi.sql.mdb.jdbc.ResultSet(new ResultSettable() {
+
+            @Override
+            public List<Object[]> getValues() {
+                try {
+                    return mdb.getTable(tableNamePattern).getColumns().stream()
+                        .map(c -> new Object[] {c.getName(), Types.VARCHAR})
+                        .collect(Collectors.toList());
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+
+            @Override
+            public String columnNameAt(int index) {
+                return new String[] {"COLUMN_NAME", "TYPE_NAME"}[index];
+            }
+
+            @Override
+            public int columnTypeAt(int index) {
+                return new int[] {Types.VARCHAR, Types.VARCHAR}[index];
+            }
+        });
     }
 
     @Override
