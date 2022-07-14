@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2022 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
+
 package vavi.sql;
 
 import java.io.IOException;
@@ -102,7 +108,7 @@ public class Engine {
         Function<Object[], Object> eval(Phrase... prims);
     }
 
-    /** Polish Notation */
+    /** polish notation */
     private List<Phrase> whereClause = new ArrayList<>();
 
     /** queried column value */
@@ -139,7 +145,7 @@ Debug.println("column: " + name + ", " + index);
         }
     }
 
-    /** delayed operator execution */
+    /** lazy evaluation */
     private static class FunctionPhrase implements Phrase {
         OpPhrase op;
         Phrase[] prims;

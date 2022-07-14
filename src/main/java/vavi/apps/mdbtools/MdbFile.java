@@ -2,9 +2,6 @@
  * MDB Tools - A library for reading MS Access database files
  *
  * Copyright (C) 2000 Brian Bruns.
- * Copyright (c) 2004 by Naohide Sano, All Rights Reserved.
- *
- * Programmed by Naohide Sano
  */
 
 package vavi.apps.mdbtools;
@@ -33,6 +30,7 @@ import vavi.util.Debug;
  * <li> mdb.jet3.encoding ... for jet3, default ISO_8859_1 </li>
  * </p>
  *
+ * @author Brian Bruns
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
