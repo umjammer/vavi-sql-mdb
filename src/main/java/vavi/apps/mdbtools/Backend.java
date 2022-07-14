@@ -51,7 +51,7 @@ public abstract class Backend {
         return backends.get(name);
     }
 
-    /**
+    /*
      * initializes the mdb_backends hash and loads the builtin
      * backends
      */

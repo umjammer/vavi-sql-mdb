@@ -6,9 +6,17 @@
 
 package vavi.sql.mdb.jdbc;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import vavi.apps.mdbtools.MdbFile;
+import vavi.sql.ResultSettable;
 
 
 /**
@@ -19,10 +27,12 @@ import java.sql.SQLException;
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
-    String url;
+    private String url;
+    private MdbFile mdb;
 
-    public DatabaseMetaData(String url) {
+    public DatabaseMetaData(String url, MdbFile mdb) {
         this.url = url;
+        this.mdb = mdb;
     }
 
     @Override
@@ -37,7 +47,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public String getURL() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return url;
     }
 
     @Override
@@ -102,12 +112,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public boolean usesLocalFiles() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return true;
     }
 
     @Override
     public boolean usesLocalFilePerTable() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return false;
     }
 
     @Override
@@ -131,8 +141,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     @Override
-    public boolean supportsMixedCaseQuotedIdentifiers()
-        throws SQLException {
+    public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -217,8 +226,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     @Override
-    public boolean supportsConvert(int fromType, int toType)
-        throws SQLException {
+    public boolean supportsConvert(int fromType, int toType) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -228,8 +236,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     @Override
-    public boolean supportsDifferentTableCorrelationNames()
-        throws SQLException {
+    public boolean supportsDifferentTableCorrelationNames() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -309,8 +316,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     @Override
-    public boolean supportsIntegrityEnhancementFacility()
-        throws SQLException {
+    public boolean supportsIntegrityEnhancementFacility() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -355,8 +361,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     @Override
-    public boolean supportsSchemasInDataManipulation()
-        throws SQLException {
+    public boolean supportsSchemasInDataManipulation() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -366,26 +371,22 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     @Override
-    public boolean supportsSchemasInTableDefinitions()
-        throws SQLException {
+    public boolean supportsSchemasInTableDefinitions() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public boolean supportsSchemasInIndexDefinitions()
-        throws SQLException {
+    public boolean supportsSchemasInIndexDefinitions() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public boolean supportsSchemasInPrivilegeDefinitions()
-        throws SQLException {
+    public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public boolean supportsCatalogsInDataManipulation()
-        throws SQLException {
+    public boolean supportsCatalogsInDataManipulation() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -395,20 +396,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     @Override
-    public boolean supportsCatalogsInTableDefinitions()
-        throws SQLException {
+    public boolean supportsCatalogsInTableDefinitions() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public boolean supportsCatalogsInIndexDefinitions()
-        throws SQLException {
+    public boolean supportsCatalogsInIndexDefinitions() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public boolean supportsCatalogsInPrivilegeDefinitions()
-        throws SQLException {
+    public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -473,20 +471,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     @Override
-    public boolean supportsOpenCursorsAcrossRollback()
-        throws SQLException {
+    public boolean supportsOpenCursorsAcrossRollback() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public boolean supportsOpenStatementsAcrossCommit()
-        throws SQLException {
+    public boolean supportsOpenStatementsAcrossCommit() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public boolean supportsOpenStatementsAcrossRollback()
-        throws SQLException {
+    public boolean supportsOpenStatementsAcrossRollback() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -675,30 +670,48 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     @Override
     public ResultSet getColumns(String catalog, String schemaPattern,
                                 String tableNamePattern,
-                                String columnNamePattern)
-        throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+                                String columnNamePattern) throws SQLException {
+        return new vavi.sql.mdb.jdbc.ResultSet(new ResultSettable() {
+
+            @Override
+            public List<Object[]> getValues() {
+                try {
+                    return mdb.getTable(tableNamePattern).getColumns().stream()
+                        .map(c -> new Object[] {c.getName(), Types.VARCHAR})
+                        .collect(Collectors.toList());
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+
+            @Override
+            public String columnNameAt(int index) {
+                return new String[] {"COLUMN_NAME", "TYPE_NAME"}[index];
+            }
+
+            @Override
+            public int columnTypeAt(int index) {
+                return new int[] {Types.VARCHAR, Types.VARCHAR}[index];
+            }
+        });
     }
 
     @Override
     public ResultSet getColumnPrivileges(String catalog, String schema,
-                                         String table, String columnNamePattern)
-        throws SQLException {
+                                         String table, String columnNamePattern) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public ResultSet getTablePrivileges(String catalog, String schemaPattern,
-                                        String tableNamePattern)
-        throws SQLException {
+                                        String tableNamePattern) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public ResultSet getBestRowIdentifier(String catalog, String schema,
                                           String table, int scope,
-                                          boolean nullable)
-        throws SQLException {
+                                          boolean nullable) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -709,20 +722,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     @Override
-    public ResultSet getPrimaryKeys(String catalog, String schema, String table)
-        throws SQLException {
+    public ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public ResultSet getImportedKeys(String catalog, String schema, String table)
-        throws SQLException {
+    public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public ResultSet getExportedKeys(String catalog, String schema, String table)
-        throws SQLException {
+    public ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -731,8 +741,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                        String primarySchema,
                                        String primaryTable,
                                        String foreignCatalog,
-                                       String foreignSchema, String foreignTable)
-        throws SQLException {
+                                       String foreignSchema, String foreignTable) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -743,8 +752,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public ResultSet getIndexInfo(String catalog, String schema, String table,
-                                  boolean unique, boolean approximate)
-        throws SQLException {
+                                  boolean unique, boolean approximate) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -754,8 +762,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     @Override
-    public boolean supportsResultSetConcurrency(int type, int concurrency)
-        throws SQLException {
+    public boolean supportsResultSetConcurrency(int type, int concurrency) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -813,8 +820,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getUDTs(String catalog,
                                       String schemaPattern,
                                       String typeNamePattern,
-                                      int[] types)
-        throws SQLException {
+                                      int[] types) throws SQLException {
 
         throw new UnsupportedOperationException("Not implemented.");
     }
@@ -834,146 +840,122 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public int getDatabaseMajorVersion() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public int getDatabaseMinorVersion() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public int getJDBCMajorVersion() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public int getJDBCMinorVersion() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public int getResultSetHoldability() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public int getSQLStateType() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean locatorsUpdateCopy() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean supportsGetGeneratedKeys() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean supportsMultipleOpenResults() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean supportsNamedParameters() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean supportsSavepoints() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean supportsStatementPooling() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean supportsResultSetHoldability(int arg0) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public ResultSet getSuperTables(String arg0, String arg1, String arg2) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public ResultSet getSuperTypes(String arg0, String arg1, String arg2) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public ResultSet getClientInfoProperties() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public RowIdLifetime getRowIdLifetime() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
@@ -981,14 +963,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                                       String schemaPattern,
                                       String tableNamePattern,
                                       String columnNamePattern) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean generatedKeyAlwaysReturned() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 }
 

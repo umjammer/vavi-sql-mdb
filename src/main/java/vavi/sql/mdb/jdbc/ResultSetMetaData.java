@@ -7,7 +7,8 @@
 package vavi.sql.mdb.jdbc;
 
 import java.sql.SQLException;
-import java.sql.Types;
+
+import vavi.sql.ResultSettable;
 
 
 /**
@@ -19,16 +20,16 @@ import java.sql.Types;
 public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     /** */
-    private ResultSet resultSet;
+    private ResultSettable resultSettable;
 
     /** */
-    public ResultSetMetaData(ResultSet resultSet) {
-        this.resultSet = resultSet;
+    public ResultSetMetaData(ResultSettable resultSettable) {
+        this.resultSettable = resultSettable;
     }
 
     @Override
     public int getColumnCount() throws SQLException {
-        return resultSet.valueList.size();
+        return resultSettable.getValues().size() > 0 ? resultSettable.getValues().get(0).length : 0;
     }
 
     @Override
@@ -71,9 +72,9 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** TODO */
+    @Override
     public String getColumnName(int column) throws SQLException {
-        return null;
+        return resultSettable.columnNameAt(column - 1);
     }
 
     @Override
@@ -101,9 +102,9 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    /** TODO */
+    @Override
     public int getColumnType(int column) throws SQLException {
-        return Types.OTHER;
+        return resultSettable.columnTypeAt(column - 1);
     }
 
     @Override
@@ -133,14 +134,12 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 }
 

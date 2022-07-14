@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -75,12 +74,12 @@ public class Table {
     /** */
     byte[] indexUsageMap;
 
+    public List<Column> getColumns() {
+        return columns;
+    }
+
     /** */
-    private Comparator<Column> columnComparator = new Comparator<Column>() {
-        public int compare(Column c1, Column c2) {
-            return c1.number - c2.number;
-        }
-    };
+    private Comparator<Column> columnComparator = (c1, c2) -> c1.number - c2.number;
 
     /** */
     Table(Catalog catalogEntry) throws IOException {

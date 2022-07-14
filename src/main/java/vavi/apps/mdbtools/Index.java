@@ -26,7 +26,7 @@ class Index {
 
     enum Order {
         ASC,
-        DESC;
+        DESC
     }
 
     static final int IDX_UNIQUE = 0x01;
@@ -257,7 +257,7 @@ Debug.println("No translation available for " + StringUtil.toHex2(text.charAt(k)
             index_hash_text((String) sarg.value, (String) idx_sarg.value);
             break;
         case LONGINT:
-            idx_sarg.value = new Integer(index_swap_int32(((Integer) sarg.value).intValue()) | 0x8000);
+            idx_sarg.value = index_swap_int32(((Integer) sarg.value).intValue()) | 0x8000;
 //Debug.println("int " + StringUtil.toHex8(((Integer) sarg.value).intValue()));
             break;
         case INT:

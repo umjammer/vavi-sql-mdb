@@ -6,6 +6,7 @@
 
 package vavi.sql.mdb.jdbc;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -13,7 +14,6 @@ import java.net.URL;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
-import java.sql.Connection;
 import java.sql.Date;
 import java.sql.NClob;
 import java.sql.ParameterMetaData;
@@ -27,6 +27,8 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+
+import vavi.sql.Engine;
 
 
 /**
@@ -44,7 +46,7 @@ public class PreparedStatement implements java.sql.PreparedStatement {
     private String[] columnNames;
 
     /** */
-    private java.sql.ResultSet currentResultSet;
+    private ResultSet currentResultSet;
 
     /** */
     private Engine engine;
@@ -53,60 +55,64 @@ public class PreparedStatement implements java.sql.PreparedStatement {
     private String sql;
 
     /** */
-    public PreparedStatement(Engine engine, String sql) {
-        this.engine = engine;
+    private Connection connection;
+
+    /** */
+    public PreparedStatement(Connection connection, String sql) {
+        this.connection = connection;
+        this.engine = connection.engine();
         this.sql = sql;
     }
 
     /** */
-    public PreparedStatement(Engine engine, String sql, String[] columnNames) {
-        this(engine, sql);
+    public PreparedStatement(Connection connection, String sql, String[] columnNames) {
+        this(connection, sql);
         this.columnNames = columnNames;
     }
 
     @Override
     public java.sql.ResultSet executeQuery() throws SQLException {
-        if (!execute()) {
-            return null;
-        }
-
-        this.currentResultSet = this.getResultSet();
-
-        return currentResultSet;
+        return executeQuery(sql);
     }
 
-    /** TODO */
     @Override
     public int executeUpdate() throws SQLException {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean execute() throws SQLException {
-        return engine.excute(sql);
+        try {
+            boolean r = engine.execute(sql, params);
+            this.currentResultSet = new ResultSet(engine.result());
+            return r;
+        } catch (IOException e) {
+            throw new SQLException(e);
+        }
     }
 
     @Override
     public java.sql.ResultSet getResultSet() throws SQLException {
-        return new ResultSet(engine.getValues());
+        return this.currentResultSet;
     }
 
     @Override
-    public int executeUpdate(String arg0, String[] arg1) throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+    public int executeUpdate(String sql, String[] columnNames) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public boolean execute(String arg0, String[] arg1) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean execute(String sql, String[] columnNames) throws SQLException {
+        this.sql = sql;
+        this.columnNames = columnNames;
+        return execute();
     }
 
     @Override
-    public ResultSet executeQuery(String arg0) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+    public java.sql.ResultSet executeQuery(String sql) throws SQLException {
+        this.sql = sql;
+        execute();
+        return currentResultSet;
     }
 
     @Override
@@ -176,8 +182,7 @@ public class PreparedStatement implements java.sql.PreparedStatement {
 
     @Override
     public SQLWarning getWarnings() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
@@ -277,390 +282,299 @@ public class PreparedStatement implements java.sql.PreparedStatement {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
-    public void setURL(int arg0, URL arg1) throws SQLException {
-        // TODO Auto-generated method stub
-
+    public void setURL(int parameterIndex, URL x) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public ParameterMetaData getParameterMetaData() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public int getFetchDirection() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public int getFetchSize() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public int getMaxFieldSize() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public int getMaxRows() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public int getQueryTimeout() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public int getResultSetConcurrency() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public int getResultSetHoldability() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public int getResultSetType() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public int getUpdateCount() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public void cancel() throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public void clearBatch() throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public void clearWarnings() throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public void close() throws SQLException {
-        // TODO Auto-generated method stub
-
+        engine = null;
     }
 
-    
     @Override
     public boolean getMoreResults() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public int[] executeBatch() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
-    public void setFetchDirection(int arg0) throws SQLException {
-        // TODO Auto-generated method stub
-
+    public void setFetchDirection(int direction) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
-    public void setFetchSize(int arg0) throws SQLException {
-        // TODO Auto-generated method stub
-
+    public void setFetchSize(int rows) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
-    public void setMaxFieldSize(int arg0) throws SQLException {
-        // TODO Auto-generated method stub
-
+    public void setMaxFieldSize(int max) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public void setMaxRows(int arg0) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public void setQueryTimeout(int arg0) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public boolean getMoreResults(int arg0) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
     public void setEscapeProcessing(boolean arg0) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
-    public int executeUpdate(String arg0) throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+    public int executeUpdate(String sql) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
-    public void addBatch(String arg0) throws SQLException {
-        // TODO Auto-generated method stub
-
+    public void addBatch(String sql) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
-    public void setCursorName(String arg0) throws SQLException {
-        // TODO Auto-generated method stub
-
+    public void setCursorName(String name) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
-    public boolean execute(String arg0) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean execute(String sql) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
-    public int executeUpdate(String arg0, int arg1) throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+    public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
-    public boolean execute(String arg0, int arg1) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
-    public int executeUpdate(String arg0, int[] arg1) throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+    public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
-    
     @Override
-    public boolean execute(String arg0, int[] arg1) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean execute(String sql, int[] columnIndexes) throws SQLException {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public Connection getConnection() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return connection;
     }
 
     @Override
     public ResultSet getGeneratedKeys() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setNClob(int parameterIndex, NClob value) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setNString(int parameterIndex, String value) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setRowId(int parameterIndex, RowId x) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean isClosed() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean isPoolable() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void setPoolable(boolean poolable) throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public void closeOnCompletion() throws SQLException {
-        // TODO Auto-generated method stub
-
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public boolean isCloseOnCompletion() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 }
 

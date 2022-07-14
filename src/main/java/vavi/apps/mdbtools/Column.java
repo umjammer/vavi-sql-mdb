@@ -21,7 +21,7 @@ import vavi.util.Debug;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
-class Column {
+public class Column {
 
     static int UNDEFINED = -1;
 
@@ -40,9 +40,9 @@ class Column {
         MEMO(0x0c, 255, UNDEFINED),
         REPID(0x0f, UNDEFINED, 0),
         NUMERIC(0x10, UNDEFINED, 0);
-        int value;
-        int displaySize;
-        int fixedSize;
+        final int value;
+        final int displaySize;
+        final int fixedSize;
         Type(int value, int displaySize, int fixedSize) {
             this.value = value;
             this.displaySize = displaySize;
@@ -65,7 +65,11 @@ class Column {
             }
             throw new IllegalArgumentException(String.valueOf(value));
         }
-    };
+    }
+
+    public String getName() {
+        return name;
+    }
 
     /** */
     String name;
@@ -104,8 +108,7 @@ class Column {
     /** */
     public boolean testSargs(MdbFile mdb, int offset, int len) {
 
-        for (int i = 0; i < sargs.size(); i++) {
-            Sarg sarg = sargs.get(i);
+        for (Sarg sarg : sargs) {
             if (sarg.testSarg(mdb, this, offset, len) == 0) {
                 // sarg didn't match, no sense going on
                 return false;
