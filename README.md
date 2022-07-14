@@ -3,15 +3,15 @@
 
 # mdbtools
 
-access Microsoft Access files directry or by jdbc.
+access Microsoft Access files directory or by jdbc (where clause partly works!).
 
 ## TODO
 
  * don't forget the purpose, because I made it to read the wmp DB.
   If you just do JDBC, Type 1 is fine.
- * ~~ jdbc-nize ~~
-   * prepared statement
-   * big decimal
+ * ~~jdbc-nize~~
+   * ~~prepared statement~~
+   * details (metadata, implementation of operator)
  * memo: cut with 0 at the last?
  * currency: implement in java Currency
  * fuzzing
@@ -29,3 +29,4 @@ access Microsoft Access files directry or by jdbc.
 
  * https://github.com/mdbtools/mdbtools
  * https://github.com/ome/ome-mdbtools
+ * https://github.com/JSQLParser/JSqlParser
