@@ -1,5 +1,7 @@
 [![Release](https://jitpack.io/v/umjammer/vavi-sql-mdb.svg)](https://jitpack.io/#umjammer/vavi-sql-mdb)
 [![Actions Status](https://github.com/umjammer/vavi-sql-mdb/workflows/Java%20CI/badge.svg)](https://github.com/umjammer/vavi-sql-mdb/actions)
+[![CodeQL](https://github.com/umjammer/vavi-sql-mdb/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/umjammer/vavi-sql-mdb/actions/workflows/codeql-analysis.yml)
+[![Actions Status](https://github.com/umjammer/vavi-sql-mdb/workflows/Java%20CI/badge.svg)](https://github.com/umjammer/vavi-sql-mdb/actions)
 
 # mdbtools
 
@@ -18,6 +20,7 @@ access Microsoft Access files directory or by jdbc (where clause partly works!).
    * https://github.com/mdbtools/mdbtools/tree/dev/src/fuzz
    * https://github.com/CodeIntelligenceTesting/jazzer
    * https://bazel.build/
+ * sarg and where clause
 
 ## License
 
