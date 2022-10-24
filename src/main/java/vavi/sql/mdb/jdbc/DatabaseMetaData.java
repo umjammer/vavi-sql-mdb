@@ -8,6 +8,7 @@ package vavi.sql.mdb.jdbc;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
@@ -677,7 +678,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             public List<Object[]> getValues() {
                 try {
                     return mdb.getTable(tableNamePattern).getColumns().stream()
-                        .map(c -> new Object[] {c.getName(), Types.VARCHAR})
+                        .map(c -> new Object[] {c.getName(), JDBCType.VARCHAR.getName()})
                         .collect(Collectors.toList());
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
