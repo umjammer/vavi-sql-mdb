@@ -42,7 +42,7 @@ public class Currency {
                 b[i] = (byte) ~b[i];
             }
             for (int i = 0; i < numberOfBytes; i++) {
-                b[i] += 1;
+                b[i] = (byte) (b[i] + 1);
                 if (b[i] != 0) {
                     break;
                 }
