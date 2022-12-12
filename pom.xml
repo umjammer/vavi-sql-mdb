@@ -8,7 +8,7 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-sql-mdb</artifactId>
-  <version>0.0.3</version>
+  <version>0.0.4</version>
 
   <name>Vavi SQL MDB API</name>
   <organization>
@@ -118,7 +118,7 @@
     <dependency>
       <groupId>com.code-intelligence</groupId>
       <artifactId>jazzer-api</artifactId>
-      <version>0.13.0</version>
+      <version>0.13.1</version>
       <scope>test</scope>
     </dependency>
 

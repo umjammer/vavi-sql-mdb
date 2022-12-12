@@ -5,7 +5,7 @@
 
 # mdbtools
 
-access Microsoft Access files directory or by jdbc (where clause partly works!).
+accessing Microsoft Access files directory and it's jdbc implementation (where clause partly works!).
 
 ## TODO
 
