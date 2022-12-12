@@ -42,7 +42,7 @@ public class ResultSet implements java.sql.ResultSet {
     ResultSettable resultSettable;
 
     /** */
-    boolean opened = false;
+    boolean opened;
 
     /** */
     int index = -1;

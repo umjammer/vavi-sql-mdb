@@ -52,7 +52,7 @@ public class MdbFile implements Cloneable {
     /** */
     private byte[] altPageBuffer = new byte[PAGE_SIZE];
     /** catalog of tables */
-    List<Catalog> catalogs = new ArrayList<>();
+    List<Catalog> catalogs;
     /** */
     Statistics stats;
 
@@ -285,7 +285,7 @@ public class MdbFile implements Cloneable {
         }
 
         String text;
-        String encoding = null;
+        String encoding;
         if (isJet3()) {
             encoding = getCharset(buf, offset, length);
             if (encoding != null) {
@@ -378,7 +378,7 @@ public class MdbFile implements Cloneable {
             throw new IllegalStateException("mdb.path undefined");
         }
 
-        final String ps = System.getProperty("path.separator");
+        String ps = System.getProperty("path.separator");
         StringTokenizer st = new StringTokenizer(mdbPath, ps);
 
         while (st.hasMoreTokens()) {
@@ -668,7 +668,7 @@ public class MdbFile implements Cloneable {
         }
 
         // apply sargs here, currently we don't
-        int passed = 0;
+        int passed;
         do {
             indexPage.length = 0;
 //Debug.println("finding next on pg " + ipg.pg);

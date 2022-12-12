@@ -19,8 +19,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import static com.rainerhahnekamp.sneakythrow.Sneaky.sneaked;
 
-import static org.junit.jupiter.params.provider.Arguments.arguments;
-
 
 /**
  * MdbFileTest.

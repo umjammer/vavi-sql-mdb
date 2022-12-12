@@ -9,6 +9,7 @@ package vavi.apps.mdbtools;
 import java.io.IOException;
 
 import vavi.util.Debug;
+import vavi.util.StringUtil;
 
 
 /**
@@ -246,7 +247,7 @@ Debug.println("File is not open for writing");
         row_start &= 0x0fff; // remove flags
 
 Debug.println("page " + table.currentPhysicalPage + " row " + (table.currentRow - 1) + " start " + row_start + " end " + row_end);
-Debug.dump(mdb.getPageBuffer(), row_start, row_end);
+Debug.println(StringUtil.getDump(mdb.getPageBuffer(), row_start, row_end));
 
         Object[] values = table.fetchRows().get(table.currentRow - 1);
         for (int i = 0; i < table.numberOfColumns; i++) {
@@ -271,7 +272,7 @@ Debug.println("yes");
 
         int new_row_size = packRow(table, row_buffer, num_fields, fields);
 
-Debug.dump(row_buffer, 0, new_row_size - 1);
+Debug.println(StringUtil.getDump(row_buffer, 0, new_row_size - 1));
 
         int delta = new_row_size - old_row_size;
         if ((getFreespaceOfPage(mdb) - delta) < 0) {
@@ -288,8 +289,8 @@ Debug.println("No space left on this page, update will not occur");
         Catalog entry = table.catalogEntry;
         MdbFile mdb = entry.mdb;
 
-Debug.dump(mdb.getPageBuffer(), 39);
-Debug.dump(mdb.getPageBuffer(), mdb.getPageSize() - 160, mdb.getPageSize() - 1);
+Debug.println(StringUtil.getDump(mdb.getPageBuffer(), 39));
+Debug.println(StringUtil.getDump(mdb.getPageBuffer(), mdb.getPageSize() - 160, mdb.getPageSize() - 1));
 Debug.println("updating row " + row + " on page " + table.currentPhysicalPage);
 
         byte[] new_pg = new byte[mdb.getPageSize()];
@@ -333,8 +334,8 @@ Debug.println("updating row " + row + " on page " + table.currentPhysicalPage);
 
         _mdb_put_int16(mdb.getPageBuffer(), 2, getFreespaceOfPage(mdb));
 
-Debug.dump(mdb.getPageBuffer(), 39);
-Debug.dump(mdb.getPageBuffer(), mdb.getPageSize() - 160, mdb.getPageSize() - 1);
+Debug.println(StringUtil.getDump(mdb.getPageBuffer(), 39));
+Debug.println(StringUtil.getDump(mdb.getPageBuffer(), mdb.getPageSize() - 160, mdb.getPageSize() - 1));
 
         // drum roll, please
         if (writePage(mdb, table.currentPhysicalPage) == 0) {

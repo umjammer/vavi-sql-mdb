@@ -14,7 +14,6 @@ import vavi.apps.mdbtools.backend.AccessBackend;
 import vavi.apps.mdbtools.backend.OracleBackend;
 import vavi.apps.mdbtools.backend.PostgresBackend;
 import vavi.apps.mdbtools.backend.SybaseBackend;
-import vavi.util.StringUtil;
 
 
 /**
@@ -35,7 +34,7 @@ public abstract class Backend {
     /** */
     String getColumnTypeString(Type columnType) {
         if (columnType.getValue() > 0x10) {
-            return StringUtil.toHex4(columnType.getValue());
+            return String.format("%04x", columnType.getValue());
         } else {
             return getTypeStrings()[columnType.getValue()];
         }

@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import vavi.util.Debug;
-import vavi.util.StringUtil;
 
 
 /**
@@ -31,7 +30,7 @@ class Kkd {
     List<Column> columns;
 
     /** */
-    List<?> getColumnProperties(MdbFile mdb, int start) {
+    List<Column> getColumnProperties(MdbFile mdb, int start) {
         Column prop = new Column();
 
         this.props = new ArrayList<>();
@@ -78,7 +77,7 @@ Debug.println("length = " + tmp + " " + col_type + " " + col_num + " " + val_len
                 if (!Character.isISOControl((char) c)) {
                     Debug.println("  " + (char) c);
                 } else {
-                    Debug.println(" " + StringUtil.toHex2(c));
+                    Debug.printf(" %02x", c);
                 }
             }
             pos = start + tmp;
@@ -97,7 +96,7 @@ Debug.println(" Property " + prop.name);
         int rows = mdb.readShort(8);
 Debug.println("number of rows = " + rows);
         int kkd_start = mdb.readShort(10 + rowId * 2);
-Debug.println("kkd start = " + kkd_start + " " + StringUtil.toHex4(kkd_start));
+Debug.printf("kkd start = %04x", kkd_start, kkd_start);
         int kkd_end = mdb.getPageSize();
         for (int i = 0; i < rows; i++) {
             int tmp = mdb.readShort(10 + i * 2);
@@ -107,7 +106,7 @@ Debug.println("kkd start = " + kkd_start + " " + StringUtil.toHex4(kkd_start));
                 kkd_end = tmp;
             }
         }
-Debug.println("kkd end = " + kkd_end + " " + StringUtil.toHex4(kkd_end));
+Debug.printf("kkd end = %04x", kkd_end, kkd_end);
         int pos = kkd_start + 4; // 4 = K K D \0
         while (pos < kkd_end) {
             int tmp = mdb.readShort(pos);

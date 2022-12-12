@@ -229,7 +229,7 @@ class Index {
         for (int k = 0; k < text.length(); k++) {
             b[k] = (byte) idx_to_text[text.charAt(k)];
             if (b[k] == 0) {
-Debug.println("No translation available for " + StringUtil.toHex2(text.charAt(k)) + " " + text.charAt(k));
+Debug.printf("No translation available for %02x %c",text.charAt(k), text.charAt(k));
             }
         }
         hash = new String(b);
@@ -255,7 +255,7 @@ Debug.println("No translation available for " + StringUtil.toHex2(text.charAt(k)
             index_hash_text((String) sarg.value, (String) idx_sarg.value);
             break;
         case LONGINT:
-            idx_sarg.value = index_swap_int32(((Integer) sarg.value).intValue()) | 0x8000;
+            idx_sarg.value = index_swap_int32((Integer) sarg.value) | 0x8000;
 //Debug.println("int " + StringUtil.toHex8(((Integer) sarg.value).intValue()));
             break;
         case INT:
