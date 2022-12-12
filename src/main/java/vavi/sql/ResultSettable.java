@@ -1,9 +1,21 @@
+/*
+ * Copyright (c) 2022 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
+
 package vavi.sql;
 
 import java.sql.Types;
 import java.util.List;
 
 
+/**
+ * ResultSettable.
+ *
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
+ * @version 0.00 2022-07-14 nsano initial version <br>
+ */
 public interface ResultSettable {
 
     default void setTable(String table) {

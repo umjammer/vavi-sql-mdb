@@ -2,9 +2,6 @@
  * MDB Tools - A library for reading MS Access database files
  *
  * Copyright (C) 2000 Brian Bruns
- * Copyright (c) 2004 by Naohide Sano, All Rights Reserved.
- *
- * Programmed by Naohide Sano
  */
 
 package vavi.apps.mdbtools;
@@ -17,12 +14,12 @@ import vavi.apps.mdbtools.backend.AccessBackend;
 import vavi.apps.mdbtools.backend.OracleBackend;
 import vavi.apps.mdbtools.backend.PostgresBackend;
 import vavi.apps.mdbtools.backend.SybaseBackend;
-import vavi.util.StringUtil;
 
 
 /**
  * functions to deal with different backend database engines
  *
+ * @author Brian Bruns
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano initial version <br>
  */
@@ -37,7 +34,7 @@ public abstract class Backend {
     /** */
     String getColumnTypeString(Type columnType) {
         if (columnType.getValue() > 0x10) {
-            return StringUtil.toHex4(columnType.getValue());
+            return String.format("%04x", columnType.getValue());
         } else {
             return getTypeStrings()[columnType.getValue()];
         }

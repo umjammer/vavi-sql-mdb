@@ -2,9 +2,6 @@
  * MDB Tools - A library for reading MS Access database files
  *
  * Copyright (C) 2000 Brian Bruns.
- * Copyright (c) 2004 by Naohide Sano, All Rights Reserved.
- *
- * Programmed by Naohide Sano
  */
 
 package vavi.apps.mdbtools;
@@ -28,6 +25,7 @@ import vavi.util.StringUtil;
 /**
  * Table.
  *
+ * @author Brian Bruns
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
@@ -79,7 +77,7 @@ public class Table {
     }
 
     /** */
-    private Comparator<Column> columnComparator = (c1, c2) -> c1.number - c2.number;
+    private Comparator<Column> columnComparator = Comparator.comparingInt(c -> c.number);
 
     /** */
     Table(Catalog catalogEntry) throws IOException {
@@ -428,7 +426,7 @@ Debug.println(Level.FINER, "deleted row: " + row);
      * @throws IllegalStateException
      */
     private Object getValueOfColumn(MdbFile mdb, Column column, boolean isNull, int offset, int length) throws IOException {
-        Object result = null;
+        Object result;
         if (column.type == Column.Type.BOOL) {
             result = !isNull;
         } else if (column.type == Column.Type.OLE) {
@@ -649,7 +647,6 @@ Debug.println(Level.FINER, "deleted row: " + row);
         mdb.readAltPage(catalogEntry.tablePage);
         mdb.readPage(indexStartPage);
         currentPosition = startIndexIndex;
-        indexNumber = 0;
         for (int i = 0; i < numberOfRealIndices; i++) {
             if (!mdb.isJet3()) {
                 currentPosition += 4;

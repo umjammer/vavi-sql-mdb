@@ -1,9 +1,7 @@
 /*
  * MDB Tools - A library for reading MS Access database files
  *
- * Copyright (c) 2004 by Naohide Sano, All Rights Reserved.
- *
- * Programmed by Naohide Sano
+ * Copyright (C) 2000 Brian Bruns.
  */
 
 package vavi.apps.mdbtools;
@@ -13,6 +11,7 @@ package vavi.apps.mdbtools;
  * these routines are copied from the freetds project which does something very
  * similar
  *
+ * @author Brian Bruns
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 050408 nsano ported from mdbtool <br>
  */
@@ -43,7 +42,7 @@ public class Currency {
                 b[i] = (byte) ~b[i];
             }
             for (int i = 0; i < numberOfBytes; i++) {
-                b[i] += 1;
+                b[i] = (byte) (b[i] + 1);
                 if (b[i] != 0) {
                     break;
                 }
