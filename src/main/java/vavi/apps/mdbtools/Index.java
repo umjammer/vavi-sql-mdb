@@ -7,10 +7,11 @@
 package vavi.apps.mdbtools;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 
-import vavi.util.Debug;
-import vavi.util.StringUtil;
+import static java.lang.System.getLogger;
 
 
 /**
@@ -21,6 +22,8 @@ import vavi.util.StringUtil;
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 class Index {
+
+    private static final Logger logger = getLogger(Index.class.getName());
 
     enum Order {
         ASC,
@@ -41,13 +44,13 @@ class Index {
     /** number rows in index */
     int numberOfRows;
     int numberOfKeys;
-    int[] key_col_num = new int[MAX_IDX_COLS];
-    Order[] key_col_order = new Order[MAX_IDX_COLS];
+    int[] keyColNum = new int[MAX_IDX_COLS];
+    Order[] keyColOrder = new Order[MAX_IDX_COLS];
     int flags;
     Table table;
 
     /** */
-    private static final int[] idx_to_text = {
+    private static final int[] idxToText = {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,    //   0-  7 0x00-0x07
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,    //   8- 15 0x09-0x0f
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,    //  16- 23 0x10-0x17
@@ -185,7 +188,7 @@ class Index {
 
         for (int i = 0; i < numberOfKeys; i++) {
             c_offset++; // the per column null indicator/flags
-            Column col = table.columns.get(key_col_num[i] - 1);
+            Column col = table.columns.get(keyColNum[i] - 1);
 
             // This will go away eventually
 
@@ -196,18 +199,18 @@ class Index {
                 }
             } else {
                 c_len = col.size;
-//Debug.println("Only text types currently supported. How did we get here?");
+//logger.log(Level.TRACE, "Only text types currently supported. How did we get here?");
             }
 
             // If we have no cached index values for this column,
             // create them.
-            if (col.sargs.size() != 0 && col.indexSargCache != null) {
+            if (!col.sargs.isEmpty() && col.indexSargCache != null) {
                 col.indexSargCache = new ArrayList<>();
                 for (int j = 0; j < col.sargs.size(); j++) {
                     Sarg sarg = col.sargs.get(j);
                     Sarg idx_sarg = sarg;
-//Debug.println("calling cache_sarg");
-                    index_cache_sarg(col, sarg, idx_sarg);
+//logger.log(Level.TRACE, "calling cache_sarg");
+                    cacheSarg(col, sarg, idx_sarg);
                     col.indexSargCache.add(sarg);
                 }
             }
@@ -224,19 +227,19 @@ class Index {
     }
 
     /** */
-    private void index_hash_text(String text, String hash) {
+    private static String hashText(String text) {
         byte[] b = new byte[text.length()];
         for (int k = 0; k < text.length(); k++) {
-            b[k] = (byte) idx_to_text[text.charAt(k)];
+            b[k] = (byte) idxToText[text.charAt(k)];
             if (b[k] == 0) {
-Debug.printf("No translation available for %02x %c",text.charAt(k), text.charAt(k));
+logger.log(Level.DEBUG, String.format("No translation available for %02x %c", (int) text.charAt(k), text.charAt(k)));
             }
         }
-        hash = new String(b);
+        return new String(b);
     }
 
     /** */
-    private int index_swap_int32(int l) {
+    private static int swapInt32(int l) {
         int l2 = 0;
 
         l2 |= (l & 0x000000ff) << 24;
@@ -248,15 +251,15 @@ Debug.printf("No translation available for %02x %c",text.charAt(k), text.charAt(
     }
 
     /** */
-    void index_cache_sarg(Column col, Sarg sarg, Sarg idx_sarg) {
+    void cacheSarg(Column col, Sarg sarg, Sarg idxSarg) {
 
         switch (col.type) {
         case TEXT:
-            index_hash_text((String) sarg.value, (String) idx_sarg.value);
+            idxSarg.value = hashText((String) sarg.value);
             break;
         case LONGINT:
-            idx_sarg.value = index_swap_int32((Integer) sarg.value) | 0x8000;
-//Debug.println("int " + StringUtil.toHex8(((Integer) sarg.value).intValue()));
+            idxSarg.value = swapInt32((Integer) sarg.value) | 0x8000;
+//logger.log(Level.TRACE, "int " + StringUtil.toHex8(((Integer) sarg.value).intValue()));
             break;
         case INT:
             break;
@@ -274,31 +277,29 @@ Debug.printf("No translation available for %02x %c",text.charAt(k), text.charAt(
         }
 
         mdb.readPage(firstPage);
-        int cur_pos = 0xf8;
+        int curPos = 0xf8;
 
         for (int i = 0; i < numberOfKeys; i++) {
-            int marker = mdb.readByte(cur_pos++);
-            Column col = table.columns.get(key_col_num[i] - 1);
-Debug.println("marker " + marker + " column " + i + " coltype " + col.type + " col_size " + col.getFixedSize() + " (" + col.size + ")");
+            int marker = mdb.readByte(curPos++);
+            Column col = table.columns.get(keyColNum[i] - 1);
+logger.log(Level.DEBUG, "marker " + marker + " column " + i + " coltype " + col.type + " col_size " + col.getFixedSize() + " (" + col.size + ")");
         }
     }
 
     /** */
     public void dump(Table table) throws IOException {
 
-Debug.println("index number     " + indexNumber);
-Debug.println("index name       " + name);
-Debug.println("index first page " + firstPage);
-Debug.println("index rows       " + numberOfRows);
+logger.log(Level.DEBUG, "index number     " + indexNumber);
+logger.log(Level.DEBUG, "index name       " + name);
+logger.log(Level.DEBUG, "index first page " + firstPage);
+logger.log(Level.DEBUG, "index rows       " + numberOfRows);
 if (indexType == 1) {
- Debug.println("index is a primary key");
+ logger.log(Level.DEBUG, "index is a primary key");
 }
         for (int i = 0; i < numberOfKeys; i++) {
-            Column col = table.columns.get(key_col_num[i] - 1);
-Debug.println("Column " + col.name + "(" + key_col_num[i] + ") Sorted " + (key_col_order[i] == Order.ASC ? "ascending" : "descending") + " Unique: " + ((flags & IDX_UNIQUE) != 0 ? "Yes" : "No"));
+            Column col = table.columns.get(keyColNum[i] - 1);
+logger.log(Level.DEBUG, "Column " + col.name + "(" + keyColNum[i] + ") Sorted " + (keyColOrder[i] == Order.ASC ? "ascending" : "descending") + " Unique: " + ((flags & IDX_UNIQUE) != 0 ? "Yes" : "No"));
         }
         walk(table);
     }
 }
-
-/* */

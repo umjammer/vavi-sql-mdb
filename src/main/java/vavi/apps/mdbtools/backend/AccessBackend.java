@@ -48,5 +48,3 @@ public class AccessBackend extends Backend {
         return "relationships are not supported for access";
     }
 }
-
-/* */

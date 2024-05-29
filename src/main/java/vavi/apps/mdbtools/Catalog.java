@@ -7,10 +7,12 @@
 package vavi.apps.mdbtools;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.List;
 
-import vavi.util.Debug;
+import static java.lang.System.getLogger;
 
 
 /**
@@ -21,6 +23,8 @@ import vavi.util.Debug;
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 class Catalog {
+
+    private static final Logger logger = getLogger(Catalog.class.getName());
 
     enum Type {
         FORM(0),
@@ -72,7 +76,7 @@ class Catalog {
         this.type = type;
         this.tablePage = tablePage;
         this.flag = flag;
-//Debug.println(StringUtil.paramString(this));
+//logger.log(Level.TRACE, StringUtil.paramString(this));
     }
 
     /** */
@@ -86,9 +90,9 @@ class Catalog {
         Table table = new Table(catalog);
 //catalog.dumpTable();
 //table.columns.forEach(c -> Debug.print(c.name + ":" + c.type + ", "));
-//Debug.println();
+//logger.log(Level.TRACE, );
         for (Object[] values : table.fetchRows()) {
-//Debug.println("values: " + StringUtil.paramString(values));
+//logger.log(Level.TRACE, "values: " + StringUtil.paramString(values));
             int type = (Short) values[3];
             if (objectType == Type.ANY || type == objectType.getValue()) {
                 catalog = new Catalog(
@@ -108,19 +112,19 @@ class Catalog {
     /** */
     void dumpTable() throws IOException {
         Table table = new Table(this);
-//Debug.println("**** name           = " + name);
-//Debug.println("definition page     = " + tablePage);
-//Debug.println("number of datarows  = " + table.numberOfRows);
-//Debug.println("number of columns   = " + table.numberOfColumns);
-//Debug.println("number of indices   = " + table.numberOfRealIndices);
-//Debug.println("first data page     = " + table.firstDataPage);
+//logger.log(Level.TRACE, "**** name           = " + name);
+//logger.log(Level.TRACE, "definition page     = " + tablePage);
+//logger.log(Level.TRACE, "number of datarows  = " + table.numberOfRows);
+//logger.log(Level.TRACE, "number of columns   = " + table.numberOfColumns);
+//logger.log(Level.TRACE, "number of indices   = " + table.numberOfRealIndices);
+//logger.log(Level.TRACE, "first data page     = " + table.firstDataPage);
 
         table.readIndices();
 
         for (int i = 0; i < table.numberOfColumns; i++) {
             Column column = table.columns.get(i);
 
-//Debug.println("column " + i + " Name: " + column.name + " Type: " + mdb.backend.getColumnTypeString(column.type) + "(" + column.size + ")");
+//logger.log(Level.TRACE, "column " + i + " Name: " + column.name + " Type: " + mdb.backend.getColumnTypeString(column.type) + "(" + column.size + ")");
         }
 
         for (int i = 0; i < table.numberOfIndices; i++) {
@@ -128,7 +132,7 @@ class Catalog {
             index.dump(table);
         }
         if (table.usageMap != null) {
-Debug.println("pages reserved by this object");
+logger.log(Level.DEBUG, "pages reserved by this object");
             int pgnum = mdb.read32Bit(table.usageMap, 1);
             // the first 5 bytes of the usage map mean something
             int columnNumber = 0;
@@ -163,5 +167,3 @@ Debug.println("pages reserved by this object");
         return getClass().getName() + ": " + type + ", " + name;
     }
 }
-
-/* */

@@ -7,6 +7,9 @@
 package vavi.apps.mdbtools;
 
 
+import java.util.Arrays;
+
+
 /**
  * these routines are copied from the freetds project which does something very
  * similar
@@ -54,9 +57,7 @@ public class Currency {
             multiply_byte(product, b[pos] & 0xff, multiplier);
 
             System.arraycopy(multiplier, 0, temp, 0, MAXPRECISION);
-            for (int i = 0; i < MAXPRECISION; i++) {
-                multiplier[i] = 0;
-            }
+            Arrays.fill(multiplier, 0);
             multiply_byte(multiplier, 256, temp);
         }
         if (negative != 0) {

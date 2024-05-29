@@ -48,5 +48,3 @@ public class SybaseBackend extends Backend {
         return "relationships are not supported for sybase";
     }
 }
-
-/* */

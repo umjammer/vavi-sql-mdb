@@ -6,10 +6,12 @@
 
 package vavi.apps.mdbtools;
 
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.List;
 
-import vavi.util.Debug;
+import static java.lang.System.getLogger;
 
 
 /**
@@ -20,6 +22,8 @@ import vavi.util.Debug;
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 public class Column {
+
+    private static final Logger logger = getLogger(Column.class.getName());
 
     static int UNDEFINED = -1;
 
@@ -123,13 +127,13 @@ public class Column {
 
     /** */
     int getDisplaySize() {
-        switch (type) {
-        case TEXT:
-            return size;
-        default:
-Debug.println("unknown type: " + type);
-            return type.getDisplaySize() != UNDEFINED ? type.getDisplaySize() : 0;
-        }
+        return switch (type) {
+            case TEXT -> size;
+            default -> {
+                logger.log(Level.DEBUG, "unknown type: " + type);
+                yield type.getDisplaySize() != UNDEFINED ? type.getDisplaySize() : 0;
+            }
+        };
     }
 
     /** */
@@ -157,5 +161,3 @@ Debug.println("unknown type: " + type);
         return columnType == Type.TEXT;
     }
 }
-
-/* */

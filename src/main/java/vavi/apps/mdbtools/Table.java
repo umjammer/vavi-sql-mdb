@@ -8,6 +8,8 @@ package vavi.apps.mdbtools;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -15,11 +17,11 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.logging.Level;
 
 import vavi.apps.mdbtools.Column.Type;
-import vavi.util.Debug;
 import vavi.util.StringUtil;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -30,6 +32,8 @@ import vavi.util.StringUtil;
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 public class Table {
+
+    private static final Logger logger = getLogger(Table.class.getName());
 
     /** */
     Catalog catalogEntry;
@@ -77,7 +81,7 @@ public class Table {
     }
 
     /** */
-    private Comparator<Column> columnComparator = Comparator.comparingInt(c -> c.number);
+    private final Comparator<Column> columnComparator = Comparator.comparingInt(c -> c.number);
 
     /** */
     Table(Catalog catalogEntry) throws IOException {
@@ -92,7 +96,7 @@ public class Table {
             throw new IllegalStateException("not a valid table def page[" + catalogEntry.tablePage + "]: " + mdb.getPageBuffer()[0]);
         }
         int length = mdb.readShort(8);
-//Debug.println("length: " + length);
+//logger.log(Level.TRACE, "length: " + length);
         this.numberOfRows = mdb.readInt(mdb.getNumberOfRowsOfTableOffset());
         int num_var_cols = mdb.readShort(mdb.getNumberOfColumnsOfTableOffset() - 2);
         this.numberOfColumns = mdb.readShort(mdb.getNumberOfColumnsOfTableOffset());
@@ -104,11 +108,11 @@ public class Table {
         int[] startRow = new int[1];
         int[] mapSize = new int[1];
         byte[] buf = mdb.find_pg_row(rowNumber, startRow, mapSize);
-//Debug.println("mapSize: " + mapSize[0]);
+//logger.log(Level.TRACE, "mapSize: " + mapSize[0]);
         this.usageMap = new byte[mapSize[0]];
         System.arraycopy(buf, startRow[0], usageMap, 0, usageMap.length);
-//Debug.println("usageMap: " + (endRow - startRow) + " bytes\n" + StringUtil.getDump(mdb.getPageBuffer(), startRow, endRow - startRow));
-//Debug.println("usage map found on page " + mdb.read24Bit(mdb.getUsageMapOfTableOffset() + 1) + " start " + StringUtil.toHex4(startRow) + " end " + StringUtil.toHex4(endRow));
+//logger.log(Level.TRACE, "usageMap: " + (endRow - startRow) + " bytes\n" + StringUtil.getDump(mdb.getPageBuffer(), startRow, endRow - startRow));
+//logger.log(Level.TRACE, "usage map found on page " + mdb.read24Bit(mdb.getUsageMapOfTableOffset() + 1) + " start " + StringUtil.toHex4(startRow) + " end " + StringUtil.toHex4(endRow));
 
         // grab a copy of the free space page map
         rowNumber = mdb.readInt(mdb.getTableFreeMapOffset());
@@ -119,7 +123,7 @@ public class Table {
         this.firstDataPage = mdb.readShort(mdb.getFirstDataPageOfTableOffset());
 
         this.columns = readColumns();
-//Debug.println("table: [" + name + "]\n" + StringUtil.paramString(this));
+//logger.log(Level.TRACE, "table: [" + name + "]\n" + StringUtil.paramString(this));
     }
 
     /** */
@@ -133,13 +137,13 @@ public class Table {
         byte[] buf = new byte[mdb.getTableColumnEntrySize()];
 
         int currentPosition = mdb.getTableColumnStartOffset() + (numberOfRealIndices * mdb.getTableRealIndicesEntrySize());
-//Debug.println("currentColumnPosition: " + currentColumnPosition);
+//logger.log(Level.TRACE, "currentColumnPosition: " + currentColumnPosition);
 
         // new code based on patch submitted by Tim Nelson 2000.09.27
 
         // column attributes
         for (int i = 0; i < numberOfColumns; i++) {
-//Debug.println("column " + i);
+//logger.log(Level.TRACE, "column " + i);
 //dumpData(mdb.pageBuffer, cur_col ,cur_col + 18);
             currentPosition = read_pg_if_n(mdb, buf, currentPosition, mdb.getTableColumnEntrySize());
             Column column = new Column();
@@ -170,10 +174,10 @@ public class Table {
             }
 
             sortedColumns.add(column);
-//Debug.println("column[" + i + "]: " + StringUtil.paramString(column));
+//logger.log(Level.TRACE, "column[" + i + "]: " + StringUtil.paramString(column));
         }
 
-//Debug.println("currentPosition: " + currentPosition);
+//logger.log(Level.TRACE, "currentPosition: " + currentPosition);
 
         // column names
         for (int i = 0; i < numberOfColumns; i++) {
@@ -192,14 +196,14 @@ public class Table {
             byte[] tmpbuf = new byte[nameSize];
             currentPosition = read_pg_if_n(mdb, tmpbuf, currentPosition, nameSize);
             column.name = mdb.getJetString(tmpbuf, 0, nameSize);
-//Debug.println("column[" + i + "]: " + StringUtil.paramString(column));
-//Debug.println(mdb.isJet3() + ", column[" + i + "]\n" + StringUtil.getDump(tmpbuf, 0, nameSize));
+//logger.log(Level.TRACE, "column[" + i + "]: " + StringUtil.paramString(column));
+//logger.log(Level.TRACE, mdb.isJet3() + ", column[" + i + "]\n" + StringUtil.getDump(tmpbuf, 0, nameSize));
         }
 
         sortedColumns.sort(columnComparator);
 
         startIndexIndex = currentPosition;
-//Debug.println("startIndexIndex " + startIndexIndex);
+//logger.log(Level.TRACE, "startIndexIndex " + startIndexIndex);
         return sortedColumns;
     }
 
@@ -239,21 +243,21 @@ public class Table {
             currentPageNumber = 1;
             currentRow = 0;
             if (readNextDPage() == 0) {
-Debug.println(Level.FINE, name + ": no page read");
+logger.log(Level.DEBUG, name + ": no page read");
                 return rows;
             }
         }
 
         while (true) {
             int rowCount = mdb.readShort(mdb.getRowCountOffset());
-//Debug.println(name + ": " + "page: " + currentPageNumber + ", physicalPage: " + currentPhysicalPage + ", row: " + currentRow + " / " + rowCount);
+//logger.log(Level.TRACE, name + ": " + "page: " + currentPageNumber + ", physicalPage: " + currentPhysicalPage + ", row: " + currentRow + " / " + rowCount);
 
             // if at end of page, find a new page
             if (currentRow >= rowCount) {
                 currentRow = 0;
 
                 if (readNextDPage() == 0) {
-Debug.println(Level.FINER, name + ": no more page");
+logger.log(Level.TRACE, name + ": no more page");
                     break;
                 }
             }
@@ -272,7 +276,7 @@ Debug.println(Level.FINER, name + ": no more page");
     void dumpData() throws IOException {
         for (Object[] values : fetchRows()) {
             for (int j = 0; j < numberOfColumns; j++) {
-Debug.println("column " + (j + 1) + " is " + values[j]);
+logger.log(Level.DEBUG, "column " + (j + 1) + " is " + values[j]);
             }
         }
     }
@@ -298,21 +302,21 @@ Debug.println("column " + (j + 1) + " is " + values[j]);
         }
         startRowIndex &= 0x0fff; // remove flags
 
-//Debug.println("Row " + row + ", bytes 0x" + StringUtil.toHex4(startRowIndex) + " to 0x" + StringUtil.toHex4(endRowIndex) + " " + (lookupFlag ? "[lookup]" : "") + " " + (deleteFlag ? "[delflag]" : ""));
-//Debug.println("here 0: " + doNotSkipDeleted);
+//logger.log(Level.TRACE, "Row " + row + ", bytes 0x" + StringUtil.toHex4(startRowIndex) + " to 0x" + StringUtil.toHex4(endRowIndex) + " " + (lookupFlag ? "[lookup]" : "") + " " + (deleteFlag ? "[delflag]" : ""));
+//logger.log(Level.TRACE, "here 0: " + doNotSkipDeleted);
 
         if (!doNotSkipDeleted && deleteFlag) {
-Debug.println(Level.FINER, "deleted row: " + row);
+logger.log(Level.TRACE, "deleted row: " + row);
             endRowIndex = startRowIndex - 1;
             return null;
         }
 
-//Debug.println("row: 0x" + StringUtil.toHex4(startRowIndex) + " -\n" + StringUtil.getDump(mdb.getPageBuffer(), startRowIndex, endRowIndex - startRowIndex));
+//logger.log(Level.TRACE, "row: 0x" + StringUtil.toHex4(startRowIndex) + " -\n" + StringUtil.getDump(mdb.getPageBuffer(), startRowIndex, endRowIndex - startRowIndex));
 
         // find out all the important stuff about the row
         this.numberOfColumns = mdb.getNumberOfColumns(startRowIndex);
         Object[] values = new Object[numberOfColumns];
-//Debug.println("table: [" + name + "]; numberOfColumns(" + row + "): " + numberOfColumns + ", lookupFlag: " + lookupFlag + ", deleteFlag: " + deleteFlag);
+//logger.log(Level.TRACE, "table: [" + name + "]; numberOfColumns(" + row + "): " + numberOfColumns + ", lookupFlag: " + lookupFlag + ", deleteFlag: " + deleteFlag);
         int variableColumns = 0; // mdb.pageBuffer[endRowIndex - 1];
         int fixedColumns = 0; // numberOfColumns - variableColumns;
         for (int j = 0; j < numberOfColumns; j++) {
@@ -335,7 +339,7 @@ Debug.println(Level.FINER, "deleted row: " + row);
             nullMask[i] = mdb.getPageBuffer()[endRowIndex - bitmaskSize + i + 1];
         }
 
-//Debug.println("numberOfColumns: " + numberOfColumns + ", variableColumns " + variableColumns + " EOD " + eod);
+//logger.log(Level.TRACE, "numberOfColumns: " + numberOfColumns + ", variableColumns " + variableColumns + " EOD " + eod);
 
         int numberOfJumps = 0, usedJumps = 0;
         int columnPointer, deletedColumns = 0;
@@ -349,7 +353,7 @@ Debug.println(Level.FINER, "deleted row: " + row);
             Column column = columns.get(j);
             if (column.isFixed() && (++foundFixedColumns <= fixedColumns)) {
 //if (column.name.equals("Type")) {
-// Debug.println("column Type, startColumn " + startColumnIndex + " startRowIndex " + startRowIndex + " data " + mdb.getPageBuffer()[startRowIndex + startColumnIndex] + " " + mdb.getPageBuffer()[startRowIndex + startColumnIndex + 1]);
+// logger.log(Level.DEBUG, "column Type, startColumn " + startColumnIndex + " startRowIndex " + startRowIndex + " data " + mdb.getPageBuffer()[startRowIndex + startColumnIndex] + " " + mdb.getPageBuffer()[startRowIndex + startColumnIndex + 1]);
 //}
                 boolean isNull = isNull(nullMask, j + 1);
                 values[j] = getValueOfColumn(mdb, column, isNull, startRowIndex + startColumnIndex, column.size);
@@ -386,7 +390,7 @@ Debug.println(Level.FINER, "deleted row: " + row);
             startColumnIndex = mdb.readByte(columnPointer);
         }
 
-//Debug.println("startColumn " + startColumnIndex + " numberOfJumps " + numberOfJumps);
+//logger.log(Level.TRACE, "startColumn " + startColumnIndex + " numberOfJumps " + numberOfJumps);
 
         // variable columns
         for (int j = 0; j < numberOfColumns; j++) {
@@ -401,7 +405,7 @@ Debug.println(Level.FINER, "deleted row: " + row);
                                           mdb.readByte(endRowIndex - bitmaskSize - foundVariableColumns * 2 - 2 - 1);
                         length = nextColumn - startColumnIndex;
 
-//Debug.println("found " + foundVariableColumns + ", fix " + (endRowIndex - bitmaskSize - foundVariableColumns * 2 - 2 - 1) + ", new pos " + (endRowIndex - bitmaskSize - foundVariableColumns * 2 - 2 - 1 - numberOfJumps * 2) + ", new start " + (endRowIndex - bitmaskSize - foundVariableColumns * 2 - 2 - 1) + ", old start " + startColumnIndex);
+//logger.log(Level.TRACE, "found " + foundVariableColumns + ", fix " + (endRowIndex - bitmaskSize - foundVariableColumns * 2 - 2 - 1) + ", new pos " + (endRowIndex - bitmaskSize - foundVariableColumns * 2 - 2 - 1 - numberOfJumps * 2) + ", new start " + (endRowIndex - bitmaskSize - foundVariableColumns * 2 - 2 - 1) + ", old start " + startColumnIndex);
 
                     } else {
                         length = mdb.readByte(columnPointer - foundVariableColumns) - startColumnIndex;
@@ -410,7 +414,7 @@ Debug.println(Level.FINER, "deleted row: " + row);
 
                 boolean isNull = isNull(nullMask, j + 1);
 
-//Debug.println("binding length " + length + ", isNull " + isNull + ", startColumn " + startColumnIndex + ", startRow " + startRowIndex + ", endRow " + endRowIndex + ", bitmask " + bitmaskSize + ", foundVariableColumns " + foundVariableColumns + ", buffer " + (endRowIndex - bitmaskSize - foundVariableColumns * 2 - 1 - numberOfJumps));
+//logger.log(Level.TRACE, "binding length " + length + ", isNull " + isNull + ", startColumn " + startColumnIndex + ", startRow " + startRowIndex + ", endRow " + endRowIndex + ", bitmask " + bitmaskSize + ", foundVariableColumns " + foundVariableColumns + ", buffer " + (endRowIndex - bitmaskSize - foundVariableColumns * 2 - 1 - numberOfJumps));
 
                 values[j] = getValueOfColumn(mdb, column, isNull, startRowIndex + startColumnIndex, length);
                 startColumnIndex += length;
@@ -440,7 +444,7 @@ Debug.println(Level.FINER, "deleted row: " + row);
                 result = getValue(mdb, offset, column, length);
             }
         }
-//Debug.println("column(" + column.number + "): [" + column.name + "], type: " + column.type + ", isNull: " + isNull + ", length: " + length + ", value: [" + result + "]");
+//logger.log(Level.TRACE, "column(" + column.number + "): [" + column.name + "], type: " + column.type + ", isNull: " + isNull + ", length: " + length + ", value: [" + result + "]");
         return result;
     }
 
@@ -479,10 +483,10 @@ Debug.println(Level.FINER, "deleted row: " + row);
 //      int map_byte;
 
         int pageNumber = 0;
-//Debug.println("map size " + map_sz);
+//logger.log(Level.TRACE, "map size " + map_sz);
         for (int i = 1; i < usageMap.length - 1; i += 4) {
             mapPage = mdb.read32Bit(usageMap, i);
-//Debug.println("loop " + i " pg " + map_pg);
+//logger.log(Level.TRACE, "loop " + i " pg " + map_pg);
 
             if (mapPage == 0) {
                 continue;
@@ -491,7 +495,7 @@ Debug.println(Level.FINER, "deleted row: " + row);
             if (mdb.readAltPage(mapPage) != mdb.getPageSize()) {
                 throw new IllegalStateException("didn't get a full page at " + mapPage);
             }
-//Debug.println("reading page " + map_pg);
+//logger.log(Level.TRACE, "reading page " + map_pg);
             for (int j = 4; j < mdb.getPageSize(); j++) {
                 for (int bitNumber = 0; bitNumber < 8; bitNumber++) {
                     if ((mdb.getAltPageBuffer()[j] & (1 << bitNumber)) != 0 &&
@@ -501,7 +505,7 @@ Debug.println(Level.FINER, "deleted row: " + row);
                         if (mdb.readPage(pageNumber) == 0) {
                             return 0;
                         } else {
-//Debug.println("page found at pageNumber " + pageNumber);
+//logger.log(Level.TRACE, "page found at pageNumber " + pageNumber);
                             return pageNumber;
                         }
                     }
@@ -510,7 +514,7 @@ Debug.println(Level.FINER, "deleted row: " + row);
             }
         }
         // didn't find anything
-//Debug.println("returning 0");
+//logger.log(Level.TRACE, "returning 0");
         return 0;
     }
 
@@ -637,7 +641,7 @@ Debug.println(Level.FINER, "deleted row: " + row);
             tmpbuf = new byte[nameSize];
             currentPosition = read_pg_if_n(mdb, tmpbuf, currentPosition, nameSize);
             pIndex.name = mdb.getJetString(tmpbuf, 0, nameSize);
-//Debug.println("index name " + pIndex.name);
+//logger.log(Level.TRACE, "index name " + pIndex.name);
         }
 
         // Pick up the column definitions for normal/primary key indexes
@@ -693,17 +697,17 @@ Debug.println(Level.FINER, "deleted row: " + row);
                     }
                 }
                 if (cleaned_col_num == -1) {
-                    Debug.printf("CRITICAL: can't find column with internal id %d in index %s\n", columnNumber, index.name);
+logger.log(Level.DEBUG, String.format("CRITICAL: can't find column with internal id %d in index %s\n", columnNumber, index.name));
                     currentPosition++;
                     continue;
                 }
 
                 // set column number to a 1 based column number and store
-                index.key_col_num[keyNumber] = cleaned_col_num + 1;
+                index.keyColNum[keyNumber] = cleaned_col_num + 1;
                 if (mdb.readByte(currentPosition) != 0) {
-                    index.key_col_order[keyNumber] = Index.Order.ASC;
+                    index.keyColOrder[keyNumber] = Index.Order.ASC;
                 } else {
-                    index.key_col_order[keyNumber] = Index.Order.DESC;
+                    index.keyColOrder[keyNumber] = Index.Order.DESC;
                 }
                 keyNumber++;
             }
@@ -749,10 +753,10 @@ Debug.println(Level.FINER, "deleted row: " + row);
         throws IOException {
 
 //if ("Name".equals(column.name)) {
-// Debug.println("start " + start + " " + length);
+// logger.log(Level.DEBUG, "start " + start + " " + length);
 //}
         if (length != 0) {
-//Debug.println("len " + length + " size " + column.size);
+//logger.log(Level.TRACE, "len " + length + " size " + column.size);
             if (column.type == Column.Type.NUMERIC) {
                 return getNumericValue(mdb, start, column.type, column.precision, column.scale);
             } else {
@@ -778,7 +782,7 @@ Debug.println(Level.FINER, "deleted row: " + row);
 
         int oleLength = mdb.readShort(start);
         int oleFlags = mdb.readShort(start + 2);
-//Debug.println("oleFlags: " + StringUtil.toHex4(oleFlags));
+//logger.log(Level.TRACE, "oleFlags: " + StringUtil.toHex4(oleFlags));
 
         if (oleFlags == 0x8000) {
             int length = size - MEMO_OVERHEAD;
@@ -792,11 +796,11 @@ Debug.println(Level.FINER, "deleted row: " + row);
             int ole_row = mdb.readByte(start + 4);
 
             int lval_pg = mdb.read24Bit(start + 5);
-//Debug.println("Reading LVAL page " + lval_pg);
+//logger.log(Level.TRACE, "Reading LVAL page " + lval_pg);
 
             if (mdb.readAltPage(lval_pg) != mdb.getPageSize()) {
                 // Failed to read
-Debug.println(Level.WARNING, "Reading LVAL page failed");
+logger.log(Level.WARNING, "Reading LVAL page failed");
                 return null;
             }
             // swap the alt and regular page buffers, so we can call get_int16
@@ -804,11 +808,11 @@ Debug.println(Level.WARNING, "Reading LVAL page failed");
             int row_stop = (ole_row != 0) ? (mdb.readShort(10 + (ole_row - 1) * 2) & 0x0fff) : (mdb.getPageSize() - 1);
             int row_start = mdb.readShort(10 + ole_row * 2);
 
-//Debug.println("row num " + ole_row + ", row start " + StringUtil.toHex4(row_start) + ", row stop " + StringUtil.toHex4(row_stop));
+//logger.log(Level.TRACE, "row num " + ole_row + ", row start " + StringUtil.toHex4(row_start) + ", row stop " + StringUtil.toHex4(row_stop));
 
             int length = Math.max(row_stop - row_start, 0);
             byte[] dest = new byte[length];
-//Debug.println("length: " + length);
+//logger.log(Level.TRACE, "length: " + length);
             if (length > 0) {
                 System.arraycopy(mdb.getPageBuffer(), row_start, dest, 0, length);
             }
@@ -818,7 +822,7 @@ Debug.println(Level.WARNING, "Reading LVAL page failed");
         } else if (oleFlags == 0x0000) {
             int ole_row = mdb.readByte(start + 4);
             int lval_pg = mdb.read24Bit(start + 5);
-//Debug.printf("0Reading LVAL page %08x", lval_pg);
+//logger.log(Level.TRACE, String.format("0Reading LVAL page %08x", lval_pg);
             // swap the alt and regular page buffers, so we can call get_int16
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             mdb.swapPageBuffer();
@@ -826,18 +830,18 @@ Debug.println(Level.WARNING, "Reading LVAL page failed");
             do {
 try {
                 if (mdb.readPage(lval_pg) != mdb.getPageSize()) {
-//Debug.println(Level.WARNING, "Failed to read: lval_pg: " + lval_pg);
+//logger.log(Level.TRACE, Level.WARNING, "Failed to read: lval_pg: " + lval_pg);
                     // Failed to read
                     return null;
                 }
 } catch (IllegalArgumentException e) { // TODO
-Debug.printf(Level.WARNING, e.getMessage());
+ logger.log(Level.WARNING, e.getMessage());
  mdb.swapPageBuffer();
  return baos.toByteArray();
 }
                 int row_stop = (ole_row != 0) ? (mdb.readShort(10 + (ole_row - 1) * 2) & 0x0fff) : (mdb.getPageSize() - 1);
                 int row_start = mdb.readShort(10 + ole_row * 2);
-//Debug.println("row num " + ole_row + ", row start " + row_start + ", row stop " + row_stop);
+//logger.log(Level.TRACE, "row num " + ole_row + ", row start " + row_start + ", row stop " + row_stop);
 
                 int length = row_stop - row_start;
                 baos.write(mdb.getPageBuffer(), row_start + 4, length - 4);
@@ -846,13 +850,13 @@ Debug.printf(Level.WARNING, e.getMessage());
                 // find next lval page
                 ole_row = mdb.readByte(row_start);
                 lval_pg = mdb.read24Bit(row_start + 1);
-//Debug.printf("nReading LVAL page %08x, %s, %s", lval_pg, (lval_pg & 0x800) == 0, (lval_pg & 0x400) == 0);
+//logger.log(Level.TRACE, String.format("nReading LVAL page %08x, %s, %s", lval_pg, (lval_pg & 0x800) == 0, (lval_pg & 0x400) == 0);
             } while (lval_pg != 0 && ((lval_pg & 0x800) == 0 && (lval_pg & 0x400) == 0));
             // make sure to swap page back
             mdb.swapPageBuffer();
             return baos.toByteArray();
         } else {
-Debug.printf(Level.WARNING, "Unhandled ole field flags: %04x", oleFlags);
+logger.log(Level.WARNING, String.format("Unhandled ole field flags: %04x", oleFlags));
             return null;
         }
     }
@@ -870,7 +874,7 @@ Debug.printf(Level.WARNING, "Unhandled ole field flags: %04x", oleFlags);
             return null;
         }
 
-//Debug.println(StringUtil.getDump(mdb.getPageBuffer(), start, 12));
+//logger.log(Level.TRACE, StringUtil.getDump(mdb.getPageBuffer(), start, 12));
 
         int memoLength = mdb.readShort(start);
         int memoFlags = mdb.readShort(start + 2);
@@ -879,7 +883,7 @@ Debug.printf(Level.WARNING, "Unhandled ole field flags: %04x", oleFlags);
             // inline memo field
 //Debug.dump(mdb.getPageBuffer(), start + MEMO_OVERHEAD, size - MEMO_OVERHEAD);
             String text = mdb.getJetString(mdb.getPageBuffer(), start + MEMO_OVERHEAD, size - MEMO_OVERHEAD);
-//Debug.println("0x" + StringUtil.toHex4(memoFlags) + ": " + text);
+//logger.log(Level.TRACE, "0x" + StringUtil.toHex4(memoFlags) + ": " + text);
             return text;
         } else if ((memoFlags & 0x4000) != 0) {
             // The 16 bit integer at offset 0 is the length of the memo field.
@@ -887,17 +891,17 @@ Debug.printf(Level.WARNING, "Unhandled ole field flags: %04x", oleFlags);
             int memo_row = mdb.readByte(start + 4);
 
             int lval_pg = mdb.read24Bit(start + 5);
-//Debug.println("Reading LVAL page " + lval_pg);
+//logger.log(Level.TRACE, "Reading LVAL page " + lval_pg);
 
             if (mdb.readAltPage(lval_pg) != mdb.getPageSize()) {
-Debug.println(Level.WARNING, "failed to read page: " + lval_pg);
+logger.log(Level.WARNING, "failed to read page: " + lval_pg);
                 return null;
             }
             // swap the alt and regular page buffers, so we can call get_int16
             mdb.swapPageBuffer();
             int row_stop = (memo_row != 0) ? mdb.readShort(mdb.getRowCountOffset() + 2 + (memo_row - 1) * 2) & 0x0fff : mdb.getPageSize();
             int row_start = mdb.readShort(mdb.getRowCountOffset() + 2 + memo_row * 2);
-//Debug.println("row num " + memo_row + " row start " + row_start + " row stop " + row_stop);
+//logger.log(Level.TRACE, "row num " + memo_row + " row start " + row_start + " row stop " + row_stop);
             int len = row_stop - row_start;
 //Debug.dump(mdb.getPageBuffer(), row_start, len);
             String text = mdb.getJetString(mdb.getPageBuffer(), row_start, len);
@@ -907,18 +911,18 @@ Debug.println(Level.WARNING, "failed to read page: " + lval_pg);
         } else { /* if (memo_flags == 0x0000) { */
             int memo_row = mdb.readByte(start + 4);
             int lval_pg = mdb.read24Bit(start + 5);
-//Debug.println("Reading LVAL page " + lval_pg);
+//logger.log(Level.TRACE, "Reading LVAL page " + lval_pg);
             // swap the alt and regular page buffers, so we can call get_int16
             mdb.swapPageBuffer();
             String text = null;
             do {
                 if (mdb.readPage(lval_pg) != mdb.getPageSize()) {
-Debug.println(Level.WARNING, "failed to read page: " + lval_pg);
+logger.log(Level.WARNING, "failed to read page: " + lval_pg);
                     return null;
                 }
                 int row_stop = (memo_row != 0) ? mdb.readShort(10 + (memo_row - 1) * 2) & 0x0fff : mdb.getPageSize() - 1;
                 int row_start = mdb.readShort(10 + memo_row * 2);
-//Debug.println("row num " + memo_row + " row start " + row_start + " row stop" + row_stop);
+//logger.log(Level.TRACE, "row num " + memo_row + " row start " + row_start + " row stop" + row_stop);
 
                 int len = row_stop - row_start;
                 text = new String(mdb.getPageBuffer(), row_start + 4,
@@ -929,7 +933,7 @@ Debug.println(Level.WARNING, "failed to read page: " + lval_pg);
                 // find next lval page
                 memo_row = mdb.readByte(row_start);
                 lval_pg = mdb.read24Bit(row_start + 1);
-//Debug.println("0x" + StringUtil.toHex4(memoFlags) + ": " + text);
+//logger.log(Level.TRACE, "0x" + StringUtil.toHex4(memoFlags) + ": " + text);
             } while (lval_pg != 0);
             // make sure to swap page back
             mdb.swapPageBuffer();
@@ -941,7 +945,7 @@ Debug.println(Level.WARNING, "failed to read page: " + lval_pg);
      * @return numeric String
      */
     private String getNumericValue(MdbFile mdb, int start, Type type, int prec, int scale) {
-//Debug.println("numeric: " + String.valueOf(mdb.readInt(start + 13)) + ", start: " + start + ", prec: " + prec + ", scale: " + scale);
+//logger.log(Level.TRACE, "numeric: " + String.valueOf(mdb.readInt(start + 13)) + ", start: " + start + ", prec: " + prec + ", scale: " + scale);
         String value = String.valueOf(mdb.readInt(start + 13));
         value = value.substring(0, Math.min(prec, value.length()));
 
@@ -999,7 +1003,7 @@ Debug.println(Level.WARNING, "failed to read page: " + lval_pg);
         for (int i = 0; i < numberOfIndices; i++) {
             Index index = indices.get(i);
             for (int j = 0; j < index.numberOfKeys; j++) {
-                if (index.key_col_num[j] == columnNumber) {
+                if (index.keyColNum[j] == columnNumber) {
                     return true;
                 }
             }
@@ -1012,5 +1016,3 @@ Debug.println(Level.WARNING, "failed to read page: " + lval_pg);
         return getClass().getName() + ": " + name + "[" + numberOfRows + "], " + StringUtil.paramString(columns);
     }
 }
-
-/* */

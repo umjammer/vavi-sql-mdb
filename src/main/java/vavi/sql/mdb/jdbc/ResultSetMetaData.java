@@ -20,7 +20,7 @@ import vavi.sql.ResultSettable;
 public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     /** */
-    private ResultSettable resultSettable;
+    private final ResultSettable resultSettable;
 
     /** */
     public ResultSetMetaData(ResultSettable resultSettable) {
@@ -29,7 +29,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
 
     @Override
     public int getColumnCount() throws SQLException {
-        return resultSettable.getValues().size() > 0 ? resultSettable.getValues().get(0).length : 0;
+        return !resultSettable.getValues().isEmpty() ? resultSettable.getValues().get(0).length : 0;
     }
 
     @Override
@@ -142,5 +142,3 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
         throw new UnsupportedOperationException("Not implemented.");
     }
 }
-
-/* */

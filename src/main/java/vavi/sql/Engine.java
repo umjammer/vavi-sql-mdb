@@ -9,6 +9,8 @@ package vavi.sql;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.ArrayDeque;
@@ -41,14 +43,13 @@ import net.sf.jsqlparser.statement.select.AllTableColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
-import net.sf.jsqlparser.statement.select.SelectBody;
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.statement.select.SelectItemVisitor;
 import net.sf.jsqlparser.statement.select.SelectItemVisitorAdapter;
 import net.sf.jsqlparser.statement.select.SelectVisitor;
 import net.sf.jsqlparser.statement.select.SelectVisitorAdapter;
-import vavi.util.Debug;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -60,14 +61,16 @@ import vavi.util.Debug;
  */
 public class Engine {
 
+    private static final Logger logger = getLogger(Engine.class.getName());
+
     /** */
-    private JSqlParser parser = new CCJSqlParserManager();
+    private final JSqlParser parser = new CCJSqlParserManager();
 
     /** result set */
     private List<Object[]> results;
 
     /** TODO would be contained table name */
-    private List<String> tableColumnNames = new ArrayList<>();
+    private final List<String> tableColumnNames = new ArrayList<>();
 
     public ResultSettable result() {
         return new ResultSettable() {
@@ -92,10 +95,10 @@ public class Engine {
     private Map<Integer, Object> params;
 
     /** abstract database */
-    private ResultSettable database;
+    private final ResultSettable database;
 
     /** */
-    private DatabaseMetaData metaData;
+    private final DatabaseMetaData metaData;
 
     /** */
     public Engine(ResultSettable database, DatabaseMetaData metaData) {
@@ -109,7 +112,7 @@ public class Engine {
     }
 
     /** polish notation */
-    private List<Phrase> whereClause = new ArrayList<>();
+    private final List<Phrase> whereClause = new ArrayList<>();
 
     /** queried column value */
     private class ColumnPhrase implements Phrase {
@@ -119,7 +122,7 @@ public class Engine {
         ColumnPhrase(String name) {
             index = tableColumnNames.indexOf(name);
             assert index >= 0 : index + ", " + name;
-Debug.println("column: " + name + ", " + index);
+logger.log(Level.DEBUG, "column: " + name + ", " + index);
         }
         /** @param prims ignored */
         public Function<Object[], Object> eval(Phrase... prims) {
@@ -200,14 +203,14 @@ Debug.println("column: " + name + ", " + index);
         try {
             Reader reader = new StringReader(sql);
             net.sf.jsqlparser.statement.Statement statement = parser.parse(reader);
-//Debug.println("statement: " + statement);
+logger.log(Level.TRACE, "statement: " + statement);
 
             statement.accept(statementVisitor);
 
             if (this.isSelect) {
                 database.setTable(table);
                 results = database.getValues();
-                return results.size() != 0;
+                return !results.isEmpty();
             } else {
                 return false; // TODO
             }
@@ -225,7 +228,7 @@ Debug.println("column: " + name + ", " + index);
 
             Reader reader = new StringReader(sql);
             net.sf.jsqlparser.statement.Statement statement = parser.parse(reader);
-//Debug.println("statement: " + statement);
+logger.log(Level.TRACE, "statement: " + statement);
 
             statement.accept(statementVisitor);
 
@@ -239,15 +242,15 @@ Debug.println("column: " + name + ", " + index);
                 }
             }
             Phrase first = stack.pop();
-Debug.println("where: " + first);
+logger.log(Level.DEBUG, "where: " + first);
 
             if (this.isSelect) {
                 database.setTable(this.table);
                 this.results = database.getValues().stream().filter(cs -> (boolean) first.eval().apply(cs)).collect(Collectors.toList());
-Debug.println("results: " + results.size());
-                return results.size() != 0;
+logger.log(Level.DEBUG, "results: " + results.size());
+                return !results.isEmpty();
             } else {
-Debug.println("not select");
+logger.log(Level.DEBUG, "not select");
                 return false; // TODO
             }
         } catch (JSQLParserException e) {
@@ -256,24 +259,24 @@ Debug.println("not select");
     }
 
     /** */
-    private SelectVisitor selectVisitor = new SelectVisitorAdapter() {
+    private final SelectVisitor selectVisitor = new SelectVisitorAdapter() {
 
         @Override
         public void visit(PlainSelect plainSelect) {
-Debug.println("[parser] plainSelect\t" + plainSelect);
+logger.log(Level.DEBUG, "[parser] plainSelect\t" + plainSelect);
 
             FromItem from = plainSelect.getFromItem();
-Debug.println("[parser] FromItem=" + from);
+logger.log(Level.DEBUG, "[parser] FromItem=" + from);
             table = from.toString();
 
-            List<SelectItem> itemList = plainSelect.getSelectItems();
-            for (SelectItem item : itemList) {
-Debug.println("[parser] SelectItem=" + item);
+            List<SelectItem<?>> itemList = plainSelect.getSelectItems();
+            for (SelectItem<?> item : itemList) {
+logger.log(Level.DEBUG, "[parser] SelectItem=" + item);
                 item.accept(selectItemVisitor);
             }
 
             Expression where = plainSelect.getWhere();
-Debug.println("[parser] where=" + where);
+logger.log(Level.DEBUG, "[parser] where=" + where);
 
             whereClause.clear();
 
@@ -284,14 +287,14 @@ Debug.println("[parser] where=" + where);
     };
 
     /** */
-    private StatementVisitorAdapter statementVisitor = new StatementVisitorAdapter() {
+    private final StatementVisitorAdapter statementVisitor = new StatementVisitorAdapter() {
+
         @Override
         public void visit(Select select) {
-Debug.println("[parser] select\t" + select);
+logger.log(Level.DEBUG, "[parser] select\t" + select);
             isSelect = true;
-            SelectBody body = select.getSelectBody();
-Debug.println("[parser] body\t" + body);
-            body.accept(selectVisitor);
+logger.log(Level.DEBUG, "[parser] body\t" + select);
+            select.accept(selectVisitor);
         }
     };
 
@@ -303,74 +306,73 @@ Debug.println("[parser] body\t" + body);
             while (rs.next()) {
                 tableColumnNames.add(rs.getString("COLUMN_NAME"));
             }
-Debug.println("columns[" + table + "]: " + tableColumnNames);
+logger.log(Level.DEBUG, "columns[" + table + "]: " + tableColumnNames);
         } catch (SQLException e) {
             throw new IllegalStateException(e);
         }
     }
 
     /** */
-    private SelectItemVisitor selectItemVisitor = new SelectItemVisitorAdapter() {
-        // *
-        @Override
-        public void visit(AllColumns columns) {
-Debug.println("[parser] AllColumns\t" + columns);
-            isSelectAll = true;
-            fillTableColumnNames();
-        }
+    private final SelectItemVisitor selectItemVisitor = new SelectItemVisitorAdapter() {
 
-        // t.*
         @Override
-        public void visit(AllTableColumns columns) {
-Debug.println("[parser] AllTableColumns\t" + columns);
-        }
-
-        // normal column
-        @Override
-        public void visit(SelectExpressionItem item) {
-Debug.println("[parser] SelectExpressionItem\t" + item);
+        public void visit(SelectItem item) {
+logger.log(Level.DEBUG, "[parser] SelectExpressionItem\t" + item);
 
             Alias alias = item.getAlias();
-Debug.println("[parser] alias=" + alias);
+logger.log(Level.DEBUG, "[parser] alias=" + alias);
 
             Expression expression = item.getExpression();
-Debug.println("[parser] expression=" + expression);
+logger.log(Level.DEBUG, "[parser] expression=" + expression);
+
+            if (expression instanceof AllTableColumns) {
+                // t.*
+logger.log(Level.DEBUG, "[parser] AllTableColumns\t" + expression);
+            }
+
+            if (expression instanceof AllColumns) {
+                // *
+logger.log(Level.DEBUG, "[parser] AllColumns\t" + expression);
+                isSelectAll = true;
+                fillTableColumnNames();
+            }
 
             expression.accept(expressionVisitor);
         }
     };
 
     /** */
-    private ExpressionVisitor expressionVisitor = new ExpressionVisitorAdapter() {
+    private final ExpressionVisitor expressionVisitor = new ExpressionVisitorAdapter() {
+
         // normal column（column name）
         @Override
         public void visit(Column column) {
-Debug.println("[parser] column=" + column.getColumnName() + "\t" + column.getFullyQualifiedName());
+logger.log(Level.DEBUG, "[parser] column=" + column.getColumnName() + "\t" + column.getFullyQualifiedName());
             whereClause.add(new ColumnPhrase(column.getColumnName()));
         }
 
         // constant（long）
         @Override
         public void visit(LongValue value) {
-Debug.println("[parser] longValue=" + value.getValue());
+logger.log(Level.DEBUG, "[parser] longValue=" + value.getValue());
         }
 
         // function
         @Override
         public void visit(net.sf.jsqlparser.expression.Function function) {
-Debug.println("[parser] Function\t" + function);
+logger.log(Level.DEBUG, "[parser] Function\t" + function);
 
             String name = function.getName();
-Debug.println("[parser] name=" + name);
+logger.log(Level.DEBUG, "[parser] name=" + name);
 
-            ExpressionList parameters = function.getParameters();
-Debug.println("[parser] parameters=" + parameters);
+            ExpressionList<?> parameters = function.getParameters();
+logger.log(Level.DEBUG, "[parser] parameters=" + parameters);
         }
 
         // "AND"
         @Override
         public void visit(AndExpression expr) {
-Debug.println("[parser] and");
+logger.log(Level.DEBUG, "[parser] and");
             super.visit(expr);
             whereClause.add(OpPhrase.LOGICAL_AND);
         }
@@ -378,7 +380,7 @@ Debug.println("[parser] and");
         // "OR"
         @Override
         public void visit(OrExpression expr) {
-            Debug.println("[parser] or");
+logger.log(Level.DEBUG, "[parser] or");
             super.visit(expr);
             whereClause.add(OpPhrase.LOGICAL_OR);
         }
@@ -386,7 +388,7 @@ Debug.println("[parser] and");
         // "="（equals）
         @Override
         public void visit(EqualsTo expr) {
-Debug.println("[parser] =");
+logger.log(Level.DEBUG, "[parser] =");
             super.visit(expr);
             whereClause.add(OpPhrase.EQUALS);
         }
@@ -394,14 +396,14 @@ Debug.println("[parser] =");
         // jdbc "?"
         @Override
         public void visit(JdbcParameter parameter) {
-Debug.println("[parser] JdbcParameter\t" + parameter.getIndex());
+logger.log(Level.DEBUG, "[parser] JdbcParameter\t" + parameter.getIndex());
             whereClause.add(new ParamPhrase(parameter.getIndex()));
         }
 
         // jdbc ":name"
         @Override
         public void visit(JdbcNamedParameter parameter) {
-Debug.println("[parser] JdbcNamedParameter\t" + parameter.getName());
+logger.log(Level.DEBUG, "[parser] JdbcNamedParameter\t" + parameter.getName());
             whereClause.add(new ParamPhrase(parameter.getName()));
         }
     };

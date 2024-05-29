@@ -56,5 +56,3 @@ public abstract class Backend {
         }
     }
 }
-
-/* */

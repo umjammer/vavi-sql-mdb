@@ -24,17 +24,17 @@ class IndexPage {
     static final int PAGE_MAP = 5;
 
     int page;
-    int mask_pos;    
-    int mask_byte;
-    int mask_bit;
+    int maskPos;
+    int maskByte;
+    int maskBit;
     int offset;
     int length;
 
     /** */
     public IndexPage() {
         offset = 0xf8; // start byte of the index entries
-        mask_pos = 0x16;
-        mask_bit = 0;
+        maskPos = 0x16;
+        maskBit = 0;
         length = 0;
     }
 
@@ -44,22 +44,20 @@ class IndexPage {
      */
     public int findNextOnPage(MdbFile mdb) {
         do {
-//Debug.println(ipg.mask_bit + " " + ipg.mask_byte);
-            mask_bit++;
-            if (mask_bit == 8) {
-                mask_bit = 0;
-                mask_pos++;
+//logger.log(Level.TRACE, ipg.maskBit + " " + ipg.maskByte);
+            maskBit++;
+            if (maskBit == 8) {
+                maskBit = 0;
+                maskPos++;
             }
-            mask_byte = mdb.readByte(mask_pos);
+            maskByte = mdb.readByte(maskPos);
             length++;
-        } while (mask_pos <= 0xf8 && ((1 << mask_bit) & mask_byte) == 0);
+        } while (maskPos <= 0xf8 && ((1 << maskBit) & maskByte) == 0);
         
-        if (mask_pos >= 0xf8) {
+        if (maskPos >= 0xf8) {
             return 0;
         }
         
         return length;
     }
 }
-
-/* */

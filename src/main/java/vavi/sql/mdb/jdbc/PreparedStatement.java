@@ -40,7 +40,7 @@ import vavi.sql.Engine;
 public class PreparedStatement implements java.sql.PreparedStatement {
 
     /** */
-    private Map<Integer, Object> params = new HashMap<>();
+    private final Map<Integer, Object> params = new HashMap<>();
 
     /** */
     private String[] columnNames;
@@ -55,7 +55,7 @@ public class PreparedStatement implements java.sql.PreparedStatement {
     private String sql;
 
     /** */
-    private Connection connection;
+    private final Connection connection;
 
     /** */
     public PreparedStatement(Connection connection, String sql) {
@@ -196,6 +196,7 @@ public class PreparedStatement implements java.sql.PreparedStatement {
     }
 
     @Override
+    @Deprecated
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
@@ -577,5 +578,3 @@ public class PreparedStatement implements java.sql.PreparedStatement {
         throw new UnsupportedOperationException("Not implemented.");
     }
 }
-
-/* */

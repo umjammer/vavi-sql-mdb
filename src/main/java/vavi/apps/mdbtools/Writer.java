@@ -6,10 +6,14 @@
 
 package vavi.apps.mdbtools;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 
-import vavi.util.Debug;
 import vavi.util.StringUtil;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -20,6 +24,8 @@ import vavi.util.StringUtil;
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 class Writer {
+
+    private static final Logger logger = getLogger(Writer.class.getName());
 
     /** */
     void _mdb_put_int16(byte[] buf, int offset, int value) {
@@ -87,7 +93,7 @@ class Writer {
             int bitNumber = i % 8;
             // logic on nulls is reverse, 1 is not null, 0 is null
             fields[i].isNull = (mdb.readByte(nullMask + byteNumber) & (1 << bitNumber)) != 0 ? false : true;
-//Debug.println("col " + i + " is " + (fields[i].is_null ? "null" : "not null"));
+//logger.log(Level.TRACE, "col " + i + " is " + (fields[i].is_null ? "null" : "not null"));
         }
 
         int eod, len; // end of data
@@ -98,7 +104,7 @@ class Writer {
         } else {
             eod = mdb.readByte(endRowIndex - 1 - variableColumns - bitmaskSize);
         }
-//Debug.println("eod is " +  eod);
+//logger.log(Level.TRACE, "eod is " +  eod);
 
         int col_start = mdb.getStartColumnNumber();
         // actual cols on this row
@@ -124,7 +130,7 @@ class Writer {
             if (!col.isFixed() && ++var_cols_found <= variableColumns) {
                 if (var_cols_found == variableColumns) {
                     len = eod - col_start;
-//Debug.println("len = " + len + " eod " + eod + " col_start " + col_start);
+//logger.log(Level.TRACE, "len = " + len + " eod " + eod + " col_start " + col_start);
                 } else {
                     if (mdb.isJet4()) {
                         // position of the var table
@@ -141,7 +147,7 @@ class Writer {
                             bitmaskSize -
                             var_cols_found - 1;
                         len = mdb.readByte(var_entry_pos) - mdb.readByte(var_entry_pos + 1);
-//Debug.println("%d %d %d %d\n", mdb.pg_buf[var_entry_pos-1],mdb.pg_buf[var_entry_pos],len, col_start);
+//logger.log(Level.TRACE, "%d %d %d %d\n", mdb.pg_buf[var_entry_pos-1],mdb.pg_buf[var_entry_pos],len, col_start);
                     }
                 }
                 if (len < 0) {
@@ -196,8 +202,8 @@ class Writer {
         for (int i = 0; i < num_fields; i++) {
             // column is null is bit is clear (0)
             if (!fields[i].isNull) {
-                byte_ |= 1 << bit;
-Debug.println(i + " " + bit + " " + (1 << bit) + " " + byte_);
+                byte_ |= (char) (1 << bit);
+logger.log(Level.DEBUG, i + " " + bit + " " + (1 << bit) + " " + byte_);
             }
             bit++;
             if (bit == 8) {
@@ -223,13 +229,13 @@ Debug.println(i + " " + bit + " " + (1 << bit) + " " + byte_);
         rows = mdb.readShort(mdb.getRowCountOffset());
         free_start = mdb.getRowCountOffset() + 2 + (rows * 2);
         free_end = mdb.readShort((mdb.getRowCountOffset() + rows * 2)) - 1;
-Debug.println("free space left on page = " + (free_end - free_start));
+logger.log(Level.DEBUG, "free space left on page = " + (free_end - free_start));
 
         return (free_end - free_start + 1);
     }
 
     /** */
-    int updateRow(Table table) throws IOException {
+    void updateRow(Table table) throws IOException {
 
         Catalog entry = table.catalogEntry;
         MdbFile mdb = entry.mdb;
@@ -237,8 +243,7 @@ Debug.println("free space left on page = " + (free_end - free_start));
         byte[] row_buffer = new byte[4096];
 
         if (!mdb.writable) {
-Debug.println("File is not open for writing");
-            return 0;
+            throw new IOException("File is not open for writing");
         }
         int row_start = mdb.readShort((mdb.getRowCountOffset() + 2) + ((table.currentRow - 1) * 2));
         int row_end = mdb.findEndRowIndex(table.currentRow - 1);
@@ -246,25 +251,24 @@ Debug.println("File is not open for writing");
 
         row_start &= 0x0fff; // remove flags
 
-Debug.println("page " + table.currentPhysicalPage + " row " + (table.currentRow - 1) + " start " + row_start + " end " + row_end);
-Debug.println(StringUtil.getDump(mdb.getPageBuffer(), row_start, row_end));
+logger.log(Level.DEBUG, "page " + table.currentPhysicalPage + " row " + (table.currentRow - 1) + " start " + row_start + " end " + row_end);
+logger.log(Level.DEBUG, StringUtil.getDump(mdb.getPageBuffer(), row_start, row_end));
 
         Object[] values = table.fetchRows().get(table.currentRow - 1);
         for (int i = 0; i < table.numberOfColumns; i++) {
             if (values[i] != null && table.isColumnIndexed(i)) {
-Debug.println("Attempting to update column that is part of an index");
-                return 0;
+                throw new IOException("Attempting to update column that is part of an index");
             }
         }
         int num_fields = crackRow(table, row_start, row_end, fields);
 
 for (int i = 0; i < num_fields; i++) {
- Debug.println("col " + i + " " + fields[i].column + " start " + fields[i].start + " size " + fields[i].size);
+ logger.log(Level.DEBUG, "col " + i + " " + fields[i].column + " start " + fields[i].start + " size " + fields[i].size);
 }
         for (int i = 0; i < table.numberOfColumns; i++) {
             Column column = table.columns.get(i);
             if (values[i] != null) {
-Debug.println("yes");
+logger.log(Level.DEBUG, "yes");
                 fields[i].value = values[i];
                 fields[i].size = column.getLengthOfValue(values[i]);
             }
@@ -272,26 +276,25 @@ Debug.println("yes");
 
         int new_row_size = packRow(table, row_buffer, num_fields, fields);
 
-Debug.println(StringUtil.getDump(row_buffer, 0, new_row_size - 1));
+logger.log(Level.DEBUG, StringUtil.getDump(row_buffer, 0, new_row_size - 1));
 
         int delta = new_row_size - old_row_size;
         if ((getFreespaceOfPage(mdb) - delta) < 0) {
-Debug.println("No space left on this page, update will not occur");
-            return 0;
+            throw new IOException("No space left on this page, update will not occur");
         }
+
         // do it!
         replaceRow(table, table.currentRow - 1, row_buffer, new_row_size);
-        return 1;
     }
 
     /** */
-    int replaceRow(Table table, int row, byte[] new_row, int new_row_size) throws IOException {
+    void replaceRow(Table table, int row, byte[] new_row, int new_row_size) throws IOException {
         Catalog entry = table.catalogEntry;
         MdbFile mdb = entry.mdb;
 
-Debug.println(StringUtil.getDump(mdb.getPageBuffer(), 39));
-Debug.println(StringUtil.getDump(mdb.getPageBuffer(), mdb.getPageSize() - 160, mdb.getPageSize() - 1));
-Debug.println("updating row " + row + " on page " + table.currentPhysicalPage);
+logger.log(Level.DEBUG, StringUtil.getDump(mdb.getPageBuffer(), 39));
+logger.log(Level.DEBUG, StringUtil.getDump(mdb.getPageBuffer(), mdb.getPageSize() - 160, mdb.getPageSize() - 1));
+logger.log(Level.DEBUG, "updating row " + row + " on page " + table.currentPhysicalPage);
 
         byte[] new_pg = new byte[mdb.getPageSize()];
 
@@ -334,17 +337,12 @@ Debug.println("updating row " + row + " on page " + table.currentPhysicalPage);
 
         _mdb_put_int16(mdb.getPageBuffer(), 2, getFreespaceOfPage(mdb));
 
-Debug.println(StringUtil.getDump(mdb.getPageBuffer(), 39));
-Debug.println(StringUtil.getDump(mdb.getPageBuffer(), mdb.getPageSize() - 160, mdb.getPageSize() - 1));
+logger.log(Level.DEBUG, StringUtil.getDump(mdb.getPageBuffer(), 39));
+logger.log(Level.DEBUG, StringUtil.getDump(mdb.getPageBuffer(), mdb.getPageSize() - 160, mdb.getPageSize() - 1));
 
         // drum roll, please
         if (writePage(mdb, table.currentPhysicalPage) == 0) {
-Debug.println("write failed! exiting...");
-            System.exit(1);
+            throw new EOFException("write failed! exiting...");
         }
-
-        return 1;
     }
 }
-
-/* */

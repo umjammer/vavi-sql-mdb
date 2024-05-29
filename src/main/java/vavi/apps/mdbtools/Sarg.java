@@ -7,7 +7,10 @@
 package vavi.apps.mdbtools;
 
 
-import vavi.util.Debug;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -18,6 +21,8 @@ import vavi.util.Debug;
  * @version 0.00 040117 nsano ported from mdbtool <br>
  */
 class Sarg {
+
+    private static final Logger logger = getLogger(Sarg.class.getName());
 
     static final int OP_EQUAL = 1;
     static final int OP_GT = 2;
@@ -65,7 +70,7 @@ class Sarg {
             }
             break;
         default:
-Debug.println("Calling testSarg on unknown operator. Add code to Sarg:test_string() for operator " + op);
+logger.log(Level.DEBUG, "Calling testSarg on unknown operator. Add code to Sarg:test_string() for operator " + op);
             break;
         }
         return 0;
@@ -101,7 +106,7 @@ Debug.println("Calling testSarg on unknown operator. Add code to Sarg:test_strin
             }
             break;
         default:
-Debug.println("Calling testSarg on unknown operator. Add code to Sarg#test_int() for operator " + op);
+logger.log(Level.DEBUG, "Calling testSarg on unknown operator. Add code to Sarg#test_int() for operator " + op);
             break;
         }
         return 0;
@@ -122,7 +127,7 @@ Debug.println("Calling testSarg on unknown operator. Add code to Sarg#test_int()
 //            int lastchar = length > 255 ? 255 : length;
             return test_string(tmpbuf);
         default:
-Debug.println("Calling testSarg on unknown type.  Add code to Sarg#testSarg() for type " + col.type);
+logger.log(Level.DEBUG, "Calling testSarg on unknown type.  Add code to Sarg#testSarg() for type " + col.type);
             break;
         }
         return 1;
@@ -167,5 +172,3 @@ Debug.println("Calling testSarg on unknown type.  Add code to Sarg#testSarg() fo
         }
     }
 }
-
-/* */
