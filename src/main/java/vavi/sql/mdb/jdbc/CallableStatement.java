@@ -37,10 +37,10 @@ import java.util.Map;
  */
 public class CallableStatement implements java.sql.CallableStatement {
 
-    /**  */
-    private Connection connection;
+    /** */
+    private final Connection connection;
 
-    /**  */
+    /** */
     public CallableStatement(Connection connection, String sql) {
         this.connection = connection;
     }
@@ -101,8 +101,8 @@ public class CallableStatement implements java.sql.CallableStatement {
     }
 
     @Override
-    public BigDecimal getBigDecimal(int parameterIndex, int scale)
-            throws SQLException {
+    @Deprecated
+    public BigDecimal getBigDecimal(int parameterIndex, int scale) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -537,7 +537,8 @@ public class CallableStatement implements java.sql.CallableStatement {
     }
 
     @Override
-    public void setUnicodeStream(int arg0, InputStream arg1, int arg2) throws SQLException {
+    @Deprecated
+    public void setUnicodeStream(int parameterIndex, InputStream x, int index) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -1106,5 +1107,3 @@ public class CallableStatement implements java.sql.CallableStatement {
         throw new UnsupportedOperationException("Not implemented.");
     }
 }
-
-/* */

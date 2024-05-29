@@ -28,8 +28,8 @@ import vavi.sql.ResultSettable;
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
-    private String url;
-    private MdbFile mdb;
+    private final String url;
+    private final MdbFile mdb;
 
     public DatabaseMetaData(String url, MdbFile mdb) {
         this.url = url;
@@ -972,5 +972,3 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         throw new UnsupportedOperationException("Not implemented.");
     }
 }
-
-/* */

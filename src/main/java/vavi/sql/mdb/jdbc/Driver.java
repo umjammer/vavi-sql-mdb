@@ -71,5 +71,3 @@ public class Driver implements java.sql.Driver {
         return null;
     }
 }
-
-/* */

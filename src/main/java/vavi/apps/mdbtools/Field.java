@@ -23,5 +23,3 @@ class Field {
     int column;
     int offset;
 }
-
-/* */

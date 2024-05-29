@@ -8,6 +8,8 @@ package vavi.sql.mdb.jdbc;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Array;
@@ -24,10 +26,10 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
-import java.util.logging.Level;
 
 import vavi.sql.ResultSettable;
-import vavi.util.Debug;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -37,6 +39,8 @@ import vavi.util.Debug;
  * @version 0.00 040620 nsano initial version <br>
  */
 public class ResultSet implements java.sql.ResultSet {
+
+    private static final Logger logger = getLogger(ResultSet.class.getName());
 
     /** */
     ResultSettable resultSettable;
@@ -148,6 +152,7 @@ public class ResultSet implements java.sql.ResultSet {
     /**
      * @deprecated
      */
+    @Deprecated
     public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
         if (opened) {
             return (BigDecimal) resultSettable.getValues().get(index)[columnIndex - 1];
@@ -193,19 +198,20 @@ public class ResultSet implements java.sql.ResultSet {
     }
 
     @Override
-    public java.io.InputStream getAsciiStream(int columnIndex) throws SQLException {
+    public InputStream getAsciiStream(int columnIndex) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     /**
      * @deprecated
      */
-    public java.io.InputStream getUnicodeStream(int columnIndex) throws SQLException {
+    @Deprecated
+    public InputStream getUnicodeStream(int columnIndex) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public java.io.InputStream getBinaryStream(int columnIndex) throws SQLException {
+    public InputStream getBinaryStream(int columnIndex) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -220,7 +226,7 @@ public class ResultSet implements java.sql.ResultSet {
                 return index;
             }
         }
-Debug.println(Level.WARNING, columnName);
+logger.log(Level.WARNING, columnName);
         return -1;
     }
 
@@ -326,6 +332,7 @@ Debug.println(Level.WARNING, columnName);
     /**
      * @deprecated
      */
+    @Deprecated
     public BigDecimal getBigDecimal(String columnName, int scale) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
@@ -363,6 +370,7 @@ Debug.println(Level.WARNING, columnName);
     /**
      * @deprecated
      */
+    @Deprecated
     public InputStream getUnicodeStream(String columnName) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
@@ -622,13 +630,13 @@ Debug.println(Level.WARNING, columnName);
     }
 
     @Override
-    public void updateAsciiStream(int columnIndex, java.io.InputStream x,
+    public void updateAsciiStream(int columnIndex, InputStream x,
                                   int length) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public void updateBinaryStream(int columnIndex, java.io.InputStream x,
+    public void updateBinaryStream(int columnIndex, InputStream x,
                                    int length) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
@@ -737,7 +745,7 @@ Debug.println(Level.WARNING, columnName);
     }
 
     @Override
-    public void updateBinaryStream(String columnName, java.io.InputStream x, int length) throws SQLException {
+    public void updateBinaryStream(String columnName, InputStream x, int length) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -1198,5 +1206,3 @@ Debug.println(Level.WARNING, columnName);
         throw new UnsupportedOperationException("Not implemented.");
     }
 }
-
-/* */

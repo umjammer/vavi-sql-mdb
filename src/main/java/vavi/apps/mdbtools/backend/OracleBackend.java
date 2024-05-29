@@ -57,5 +57,3 @@ public class OracleBackend extends Backend {
             relationships[2]);
     }
 }
-
-/* */

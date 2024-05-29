@@ -8,12 +8,10 @@ package vavi.apps.mdbtools;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ServiceLoader;
 
 import vavi.apps.mdbtools.Column.Type;
 import vavi.apps.mdbtools.backend.AccessBackend;
-import vavi.apps.mdbtools.backend.OracleBackend;
-import vavi.apps.mdbtools.backend.PostgresBackend;
-import vavi.apps.mdbtools.backend.SybaseBackend;
 
 
 /**
@@ -26,7 +24,7 @@ import vavi.apps.mdbtools.backend.SybaseBackend;
 public abstract class Backend {
 
     /** */
-    private static Map<String, Backend> backends = new HashMap<>();
+    private static final Map<String, Backend> backends = new HashMap<>();
 
     /** */
     protected abstract String[] getTypeStrings();
@@ -53,11 +51,8 @@ public abstract class Backend {
      * backends
      */
     static {
-        backends.put(AccessBackend.class.getName(), new AccessBackend());
-        backends.put(SybaseBackend.class.getName(), new SybaseBackend());
-        backends.put(OracleBackend.class.getName(), new OracleBackend());
-        backends.put(PostgresBackend.class.getName(), new PostgresBackend());
+        for (Backend backend : ServiceLoader.load(Backend.class)) {
+            backends.put(AccessBackend.class.getName(), backend);
+        }
     }
 }
-
-/* */

@@ -8,6 +8,8 @@ package vavi.sql.mdb.jdbc;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
@@ -22,13 +24,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
-import java.util.logging.Level;
 
 import vavi.apps.mdbtools.MdbFile;
 import vavi.apps.mdbtools.Table;
 import vavi.sql.Engine;
 import vavi.sql.ResultSettable;
-import vavi.util.Debug;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -38,6 +40,8 @@ import vavi.util.Debug;
  * @version 0.00 040620 nsano initial version <br>
  */
 public class Connection implements java.sql.Connection {
+
+    private static final Logger logger = getLogger(Connection.class.getName());
 
     /** */
     private boolean connected = false;
@@ -133,7 +137,7 @@ public class Connection implements java.sql.Connection {
 
         this.url = url;
         String filename = url.substring(Driver.SCHEMA.length());
-Debug.println(Level.FINE, "url: " + url + ", " + filename);
+logger.log(Level.DEBUG, "url: " + url + ", " + filename);
 
         try {
             this.mdb = new MdbFile(filename);
@@ -416,5 +420,3 @@ Debug.println(Level.FINE, "url: " + url + ", " + filename);
         return 0;
     }
 }
-
-/* */

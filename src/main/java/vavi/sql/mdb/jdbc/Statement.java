@@ -22,27 +22,18 @@ import vavi.sql.Engine;
 public class Statement implements java.sql.Statement {
 
     /** */
-    private Engine engine;
+    private final Engine engine;
 
     /** */
     private java.sql.ResultSet currentResultSet = null;
 
     /** */
-    private Connection connection;
+    private final Connection connection;
 
     /** */
     public Statement(Connection connection) {
         this.connection = connection;
         this.engine = connection.engine();
-    }
-
-    @Override
-    protected void finalize() {
-        try {
-            close();
-        } catch (SQLException e) {
-            e.printStackTrace(System.err);
-        }
     }
 
     @Override
@@ -296,5 +287,3 @@ public class Statement implements java.sql.Statement {
         throw new UnsupportedOperationException("Not implemented.");
     }
 }
-
-/* */

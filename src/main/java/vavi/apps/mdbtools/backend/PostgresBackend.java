@@ -48,5 +48,3 @@ public class PostgresBackend extends Backend {
         return "relationships are not supported for postgres";
     }
 }
-
-/* */
