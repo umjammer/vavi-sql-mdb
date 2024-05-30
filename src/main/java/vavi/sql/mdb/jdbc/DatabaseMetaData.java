@@ -28,7 +28,9 @@ import vavi.sql.ResultSettable;
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
+    /** url for this database */
     private final String url;
+    /** real database */
     private final MdbFile mdb;
 
     public DatabaseMetaData(String url, MdbFile mdb) {
@@ -38,12 +40,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public boolean allProceduresAreCallable() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return false;
     }
 
     @Override
     public boolean allTablesAreSelectable() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return false;
     }
 
     @Override
@@ -602,54 +604,46 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     @Override
-    public boolean supportsTransactionIsolationLevel(int level)
-        throws SQLException {
+    public boolean supportsTransactionIsolationLevel(int level) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public boolean supportsDataDefinitionAndDataManipulationTransactions()
-        throws SQLException {
+    public boolean supportsDataDefinitionAndDataManipulationTransactions() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public boolean supportsDataManipulationTransactionsOnly()
-        throws SQLException {
+    public boolean supportsDataManipulationTransactionsOnly() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public boolean dataDefinitionCausesTransactionCommit()
-        throws SQLException {
+    public boolean dataDefinitionCausesTransactionCommit() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
-    public boolean dataDefinitionIgnoredInTransactions()
-        throws SQLException {
+    public boolean dataDefinitionIgnoredInTransactions() throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public ResultSet getProcedures(String catalog, String schemaPattern,
-                                   String procedureNamePattern)
-        throws SQLException {
+                                   String procedureNamePattern) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public ResultSet getProcedureColumns(String catalog, String schemaPattern,
                                          String procedureNamePattern,
-                                         String columnNamePattern)
-        throws SQLException {
+                                         String columnNamePattern) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
     public ResultSet getTables(String catalog, String schemaPattern,
-                               String tableNamePattern, String[] types)
-        throws SQLException {
+                               String tableNamePattern, String[] types) throws SQLException {
         throw new UnsupportedOperationException("Not implemented.");
     }
 
@@ -851,12 +845,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     @Override
     public int getJDBCMajorVersion() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return Driver.MAJOR_VERSION;
     }
 
     @Override
     public int getJDBCMinorVersion() throws SQLException {
-        throw new UnsupportedOperationException("Not implemented.");
+        return Driver.MINOR_VERSION;
     }
 
     @Override

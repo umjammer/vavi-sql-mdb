@@ -42,7 +42,7 @@ public class Driver implements java.sql.Driver {
 
     @Override
     public boolean acceptsURL(String url) {
-        return url.startsWith(SCHEMA );
+        return url.startsWith(SCHEMA);
     }
 
     @Override
@@ -67,7 +67,6 @@ public class Driver implements java.sql.Driver {
 
     @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-        // TODO Auto-generated method stub
-        return null;
+        return Logger.getLogger(Driver.class.getName());
     }
 }

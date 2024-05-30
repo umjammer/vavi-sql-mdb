@@ -52,12 +52,16 @@ public class Connection implements java.sql.Connection {
     /** */
     private boolean autoCommit = true;
 
+    /** url for this database */
     private String url;
 
+    /** real database */
     private MdbFile mdb;
 
+    /** */
     public Engine engine() {
-        return new Engine(new ResultSettable() {
+        Engine engine = Engine.factory(null);
+        engine.setDatabase(new ResultSettable() {
             private String table;
 
             @Override
@@ -74,7 +78,9 @@ public class Connection implements java.sql.Connection {
                     throw new UncheckedIOException(e);
                 }
             }
-        }, getMetaData());
+        });
+        engine.setDatabaseMetaData(getMetaData());
+        return engine;
     }
 
     @Override
@@ -112,22 +118,22 @@ public class Connection implements java.sql.Connection {
         return autoCommit;
     }
 
-    /** TODO */
     @Override
     public void commit() throws SQLException {
+        // TODO
     }
 
-    /** TODO */
     @Override
     public void rollback() throws SQLException {
+        // TODO
     }
 
     /**
-     * 
+     * connect to the real database.
      */
     public void connect(String url, Properties props) throws SQLException {
 
-        // 念のため2度目の入りを阻止します。
+        // prevent a second entry
         if (connected) {
             return;
         }
@@ -230,190 +236,160 @@ logger.log(Level.DEBUG, "url: " + url + ", " + filename);
         return null;
     }
 
-    /**
-     * @see java.sql.Connection#getHoldability()
-     */
+    @Override
     public int getHoldability() throws SQLException {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    /**
-     * @see java.sql.Connection#setHoldability(int)
-     */
+    @Override
     public void setHoldability(int arg0) throws SQLException {
         // TODO Auto-generated method stub
-
     }
 
-    /**
-     * @see java.sql.Connection#setSavepoint()
-     */
+    @Override
     public Savepoint setSavepoint() throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /**
-     * @see java.sql.Connection#releaseSavepoint(java.sql.Savepoint)
-     */
+    @Override
     public void releaseSavepoint(Savepoint arg0) throws SQLException {
         // TODO Auto-generated method stub
-
     }
 
-    /**
-     * @see java.sql.Connection#rollback(java.sql.Savepoint)
-     */
+    @Override
     public void rollback(Savepoint arg0) throws SQLException {
         // TODO Auto-generated method stub
-
     }
 
-    /**
-     * @see java.sql.Connection#createStatement(int, int, int)
-     */
+    @Override
     public Statement createStatement(int arg0, int arg1, int arg2) throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /**
-     * @see java.sql.Connection#prepareCall(java.lang.String, int, int, int)
-     */
+    @Override
     public CallableStatement prepareCall(String arg0, int arg1, int arg2, int arg3) throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /**
-     * @see java.sql.Connection#prepareStatement(java.lang.String, int)
-     */
+    @Override
     public PreparedStatement prepareStatement(String arg0, int arg1) throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /**
-     * @see java.sql.Connection#prepareStatement(java.lang.String, int, int, int)
-     */
+    @Override
     public PreparedStatement prepareStatement(String arg0, int arg1, int arg2, int arg3) throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /**
-     * @see java.sql.Connection#prepareStatement(java.lang.String, int[])
-     */
+    @Override
     public PreparedStatement prepareStatement(String arg0, int[] arg1) throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* @see java.sql.Connection#createArrayOf(java.lang.String, java.lang.Object[]) */
+    @Override
     public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* @see java.sql.Connection#createBlob() */
+    @Override
     public Blob createBlob() throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* @see java.sql.Connection#createClob() */
+    @Override
     public Clob createClob() throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* @see java.sql.Connection#createNClob() */
+    @Override
     public NClob createNClob() throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* @see java.sql.Connection#createSQLXML() */
+    @Override
     public SQLXML createSQLXML() throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* @see java.sql.Connection#createStruct(java.lang.String, java.lang.Object[]) */
+    @Override
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* @see java.sql.Connection#getClientInfo() */
+    @Override
     public Properties getClientInfo() throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* @see java.sql.Connection#getClientInfo(java.lang.String) */
+    @Override
     public String getClientInfo(String name) throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* @see java.sql.Connection#isValid(int) */
+    @Override
     public boolean isValid(int timeout) throws SQLException {
         // TODO Auto-generated method stub
         return false;
     }
 
-    /* @see java.sql.Connection#setClientInfo(java.util.Properties) */
+    @Override
     public void setClientInfo(Properties properties) throws SQLClientInfoException {
         // TODO Auto-generated method stub
-        
     }
 
-    /* @see java.sql.Connection#setClientInfo(java.lang.String, java.lang.String) */
+    @Override
     public void setClientInfo(String name, String value) throws SQLClientInfoException {
         // TODO Auto-generated method stub
-        
     }
 
-    /* @see java.sql.Wrapper#isWrapperFor(java.lang.Class) */
+    @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         // TODO Auto-generated method stub
         return false;
     }
 
-    /* @see java.sql.Wrapper#unwrap(java.lang.Class) */
+    @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* @see java.sql.Connection#setSchema(java.lang.String) */
     @Override
     public void setSchema(String schema) throws SQLException {
         // TODO Auto-generated method stub
     }
 
-    /* @see java.sql.Connection#getSchema() */
     @Override
     public String getSchema() throws SQLException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* @see java.sql.Connection#abort(java.util.concurrent.Executor) */
     @Override
     public void abort(Executor executor) throws SQLException {
         // TODO Auto-generated method stub
     }
 
-    /* @see java.sql.Connection#setNetworkTimeout(java.util.concurrent.Executor, int) */
     @Override
     public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
         // TODO Auto-generated method stub
     }
 
-    /* @see java.sql.Connection#getNetworkTimeout() */
     @Override
     public int getNetworkTimeout() throws SQLException {
         // TODO Auto-generated method stub

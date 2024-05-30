@@ -42,10 +42,10 @@ public class ResultSet implements java.sql.ResultSet {
 
     private static final Logger logger = getLogger(ResultSet.class.getName());
 
-    /** */
+    /** real result set data */
     ResultSettable resultSettable;
 
-    /** */
+    /** for iteration */
     boolean opened;
 
     /** */
