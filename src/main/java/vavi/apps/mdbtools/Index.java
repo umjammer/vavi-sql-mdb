@@ -86,7 +86,7 @@ class Index {
     };
 
     /*
-     *  JET Red (v4) Index definition byte layouts
+     * JET Red (v4) Index definition byte layouts
      * <pre>
      * Based on:
      *
