@@ -207,7 +207,7 @@ logger.log(Level.DEBUG, "column: " + name + ", " + index);
     public boolean execute(String sql, Map<Integer, Object> params) throws IOException {
         this.params = params;
 
-        executeInternal(sql);
+        executeInternal(sql, params);
 
         // rpn
         Deque<EngineBase.Phrase> stack = new ArrayDeque<>();
