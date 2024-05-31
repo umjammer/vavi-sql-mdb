@@ -59,7 +59,7 @@ public abstract class EngineBase implements Engine {
     protected boolean isSelectAll;
 
     /** values set by a prepared statement */
-    protected Map<Integer, Object> params;
+    private Map<Integer, Object> params;
 
     /** table name and columns name, type and value */
     private ResultSettable database;
@@ -184,7 +184,12 @@ logger.log(Level.DEBUG, "column: " + name + ", " + index);
         }
     }
 
-    /** engine specific routine */
+    /**
+     * engine specific routine
+     * @after {@link #isSelect}
+     * @after {@link #table}
+     * @after {@link #whereClause}
+     */
     protected abstract void executeInternal(String sql) throws IOException;
 
     @Override
@@ -200,14 +205,11 @@ logger.log(Level.DEBUG, "column: " + name + ", " + index);
         }
     }
 
-    /** engine specific routine */
-    protected abstract void executeInternal(String sql, Map<Integer, Object> params) throws IOException;
-
     @Override
     public boolean execute(String sql, Map<Integer, Object> params) throws IOException {
         this.params = params;
 
-        executeInternal(sql, params);
+        executeInternal(sql);
 
         // rpn
         Deque<EngineBase.Phrase> stack = new ArrayDeque<>();
