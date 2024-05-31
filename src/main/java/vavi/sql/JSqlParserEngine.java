@@ -11,7 +11,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.lang.System.Logger.Level;
 import java.util.List;
-import java.util.Map;
 
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.Alias;
@@ -56,21 +55,6 @@ public class JSqlParserEngine extends EngineBase {
     @Override
     protected void executeInternal(String sql) throws IOException {
         try {
-            Reader reader = new StringReader(sql);
-            net.sf.jsqlparser.statement.Statement statement = parser.parse(reader);
-logger.log(Level.TRACE, "statement: " + statement);
-
-            statement.accept(statementVisitor);
-        } catch (JSQLParserException e) {
-            throw new IOException(e);
-        }
-    }
-
-    @Override
-    protected void executeInternal(String sql, Map<Integer, Object> params) throws IOException {
-        try {
-            this.params = params;
-
             Reader reader = new StringReader(sql);
             net.sf.jsqlparser.statement.Statement statement = parser.parse(reader);
 logger.log(Level.TRACE, "statement: " + statement);
