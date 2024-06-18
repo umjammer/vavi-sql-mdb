@@ -222,7 +222,7 @@ logger.log(Level.DEBUG, i + " " + bit + " " + (1 << bit) + " " + byte_);
     }
 
     /** */
-    int getFreespaceOfPage(MdbFile mdb) {
+    static int getFreeSpaceOfPage(MdbFile mdb) {
 
         int rows, free_start, free_end;
 
@@ -279,7 +279,7 @@ logger.log(Level.DEBUG, "yes");
 logger.log(Level.DEBUG, StringUtil.getDump(row_buffer, 0, new_row_size - 1));
 
         int delta = new_row_size - old_row_size;
-        if ((getFreespaceOfPage(mdb) - delta) < 0) {
+        if ((getFreeSpaceOfPage(mdb) - delta) < 0) {
             throw new IOException("No space left on this page, update will not occur");
         }
 
@@ -335,7 +335,7 @@ logger.log(Level.DEBUG, "updating row " + row + " on page " + table.currentPhysi
         // almost done, copy page over current
         System.arraycopy(new_pg, 0, mdb.getPageBuffer(), 0, mdb.getPageSize());
 
-        _mdb_put_int16(mdb.getPageBuffer(), 2, getFreespaceOfPage(mdb));
+        _mdb_put_int16(mdb.getPageBuffer(), 2, getFreeSpaceOfPage(mdb));
 
 logger.log(Level.DEBUG, StringUtil.getDump(mdb.getPageBuffer(), 39));
 logger.log(Level.DEBUG, StringUtil.getDump(mdb.getPageBuffer(), mdb.getPageSize() - 160, mdb.getPageSize() - 1));

@@ -184,21 +184,21 @@ class Index {
 
     /** */
     public boolean testSargs(MdbFile mdb, int offset, int len) {
-        int c_offset = 0, c_len;
+        int cOffset = 0, cLen;
 
         for (int i = 0; i < numberOfKeys; i++) {
-            c_offset++; // the per column null indicator/flags
+            cOffset++; // the per column null indicator/flags
             Column col = table.columns.get(keyColNum[i] - 1);
 
             // This will go away eventually
 
             if (col.type == Column.Type.TEXT) {
-                c_len = 0;
-                while (mdb.readByte(offset + c_offset + c_len) != 0) {
-                    c_len++;
+                cLen = 0;
+                while (mdb.readByte(offset + cOffset + cLen) != 0) {
+                    cLen++;
                 }
             } else {
-                c_len = col.size;
+                cLen = col.size;
 //logger.log(Level.TRACE, "Only text types currently supported. How did we get here?");
             }
 
@@ -217,7 +217,7 @@ class Index {
 
             for (int j = 0; j < col.sargs.size(); j++) {
                 Sarg sarg = col.indexSargCache.get(j);
-                if (sarg.testSarg(mdb, col, offset + c_offset, c_len) == 0) {
+                if (!sarg.isSarg(mdb, col, offset + cOffset, cLen)) {
                     // sarg didn't match, no sense going on
                     return false;
                 }
@@ -251,7 +251,7 @@ logger.log(Level.DEBUG, String.format("No translation available for %02x %c", (i
     }
 
     /** */
-    void cacheSarg(Column col, Sarg sarg, Sarg idxSarg) {
+    private static void cacheSarg(Column col, Sarg sarg, Sarg idxSarg) {
 
         switch (col.type) {
         case TEXT:
@@ -269,7 +269,7 @@ logger.log(Level.DEBUG, String.format("No translation available for %02x %c", (i
     }
 
     /** */
-    void walk(Table table) throws IOException {
+    private void walk(Table table) throws IOException {
         MdbFile mdb = table.catalogEntry.mdb;
 
         if (numberOfKeys != 1) {

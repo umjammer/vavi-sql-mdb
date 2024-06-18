@@ -111,7 +111,7 @@ public class Column {
     public boolean testSargs(MdbFile mdb, int offset, int len) {
 
         for (Sarg sarg : sargs) {
-            if (sarg.testSarg(mdb, this, offset, len) == 0) {
+            if (!sarg.isSarg(mdb, this, offset, len)) {
                 // sarg didn't match, no sense going on
                 return false;
             }

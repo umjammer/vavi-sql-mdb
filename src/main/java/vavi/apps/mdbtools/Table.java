@@ -773,7 +773,7 @@ logger.log(Level.DEBUG, String.format("CRITICAL: can't find column with internal
     /**
      * @return null when error
      */
-    private byte[] getOleValue(MdbFile mdb, int start, int size)
+    private static byte[] getOleValue(MdbFile mdb, int start, int size)
         throws IOException {
 
         if (size < MEMO_OVERHEAD) {
@@ -867,7 +867,7 @@ logger.log(Level.WARNING, String.format("Unhandled ole field flags: %04x", oleFl
     /**
      * @return null when error
      */
-    private String getMemoValue(MdbFile mdb, int start, int size)
+    private static String getMemoValue(MdbFile mdb, int start, int size)
         throws IOException {
 
         if (size < MEMO_OVERHEAD) {
@@ -944,7 +944,7 @@ logger.log(Level.WARNING, "failed to read page: " + lval_pg);
     /**
      * @return numeric String
      */
-    private String getNumericValue(MdbFile mdb, int start, Type type, int prec, int scale) {
+    private static String getNumericValue(MdbFile mdb, int start, Type type, int prec, int scale) {
 //logger.log(Level.TRACE, "numeric: " + String.valueOf(mdb.readInt(start + 13)) + ", start: " + start + ", prec: " + prec + ", scale: " + scale);
         String value = String.valueOf(mdb.readInt(start + 13));
         value = value.substring(0, Math.min(prec, value.length()));
@@ -960,7 +960,7 @@ logger.log(Level.WARNING, "failed to read page: " + lval_pg);
      * @return nullable
      * @throws IllegalArgumentException
      */
-    private Object getValue(MdbFile mdb, int start, Column.Type type, int size) throws IOException {
+    private static Object getValue(MdbFile mdb, int start, Column.Type type, int size) throws IOException {
         switch (type) {
         case BYTE:
             return mdb.readByte(start);
