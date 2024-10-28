@@ -18,7 +18,6 @@ accessing Microsoft Access files directory and it's jdbc implementation (where c
 as a jdbc
 
 ```java
-    DriverManager.registerDriver(new vavi.sql.mdb.jdbc.Driver());
     conn = DriverManager.getConnection("jdbc:mdb:" + "foo/bar.mdb");
 ```
 
@@ -43,6 +42,7 @@ as a jdbc
    * details (metadata, implementation of operator)
 * memo: cut with 0 at the last?
 * currency: implement in java Currency
+  * https://github.com/JavaMoney 
 * fuzzing
    * https://github.com/mdbtools/mdbtools/tree/dev/src/fuzz
    * https://github.com/CodeIntelligenceTesting/jazzer

@@ -37,7 +37,7 @@ class Sarg {
     Object value;
 
     /** */
-    int test_string(String s) {
+    boolean isString(String s) {
 
         if (op == OP_LIKE) {
             return likeCompare(s, (String) value);
@@ -46,104 +46,98 @@ class Sarg {
         switch (op) {
         case OP_EQUAL:
             if (rc == 0) {
-                return 1;
+                return true;
             }
             break;
         case OP_GT:
             if (rc < 0) {
-                return 1;
+                return true;
             }
             break;
         case OP_LT:
             if (rc > 0) {
-                return 1;
+                return true;
             }
             break;
         case OP_GTEQ:
             if (rc <= 0) {
-                return 1;
+                return true;
             }
             break;
         case OP_LTEQ:
             if (rc >= 0) {
-                return 1;
+                return true;
             }
             break;
         default:
 logger.log(Level.DEBUG, "Calling testSarg on unknown operator. Add code to Sarg:test_string() for operator " + op);
             break;
         }
-        return 0;
+        return false;
     }
 
     /** */
-    int test_int(int i) {
+    boolean isInt(int i) {
         int v = (int) value;
         switch (op) {
         case OP_EQUAL:
             if (v == i) {
-                return 1;
+                return true;
             }
             break;
         case OP_GT:
             if (v < i) {
-                return 1;
+                return true;
             }
             break;
         case OP_LT:
             if (v > i) {
-                return 1;
+                return true;
             }
             break;
         case OP_GTEQ:
             if (v <= i) {
-                return 1;
+                return true;
             }
             break;
         case OP_LTEQ:
             if (v >= i) {
-                return 1;
+                return true;
             }
             break;
         default:
 logger.log(Level.DEBUG, "Calling testSarg on unknown operator. Add code to Sarg#test_int() for operator " + op);
             break;
         }
-        return 0;
+        return false;
     }
 
     /** */
-    int testSarg(MdbFile mdb, Column col, int offset, int length) {
+    boolean isSarg(MdbFile mdb, Column col, int offset, int length) {
 
         switch (col.type) {
         case BYTE:
-            return test_int(mdb.readByte(offset));
+            return isInt(mdb.readByte(offset));
         case INT:
-            return test_int(mdb.readShort(offset));
+            return isInt(mdb.readShort(offset));
         case LONGINT:
-            return test_int(mdb.readInt(offset));
+            return isInt(mdb.readInt(offset));
         case TEXT:
             String tmpbuf = new String(mdb.getPageBuffer(), offset, 255);
 //            int lastchar = length > 255 ? 255 : length;
-            return test_string(tmpbuf);
+            return isString(tmpbuf);
         default:
 logger.log(Level.DEBUG, "Calling testSarg on unknown type.  Add code to Sarg#testSarg() for type " + col.type);
             break;
         }
-        return 1;
+        return true;
     }
 
     /** */
-    private int likeCompare(String s, String r) {
-        int ret;
-
+    private static boolean likeCompare(String s, String r) {
         switch (r.charAt(0)) {
         case '\0':
-            if (s.charAt(0) == '\0') {
-                return 1;
-            } else {
-                return 0;
-            }
+            return s.charAt(0) == '\0';
         case '_':
             // skip one character
             return likeCompare(s.substring(1), r.substring(1));
@@ -152,11 +146,11 @@ logger.log(Level.DEBUG, "Calling testSarg on unknown type.  Add code to Sarg#tes
             // the strlen(s) + 1 is important so the next call can
             // if there are trailing characters
             for (int i = 0; i < s.length() + 1; i++) {
-                if (likeCompare(s.substring(1), r.substring(1)) != 0) {
-                    return 1;
+                if (likeCompare(s.substring(1), r.substring(1))) {
+                    return true;
                 }
             }
-            return 0;
+            return false;
         default:
             int i = 0;
             for (; i < r.length(); i++) {
@@ -164,10 +158,9 @@ logger.log(Level.DEBUG, "Calling testSarg on unknown type.  Add code to Sarg#tes
                     break;
             }
             if (s.substring(0, i).equals(r)) {
-                return 0;
+                return false;
             } else {
-                ret = likeCompare(s.substring(i), r.substring(i));
-                return ret;
+                return likeCompare(s.substring(i), r.substring(i));
             }
         }
     }

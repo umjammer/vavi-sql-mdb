@@ -514,27 +514,27 @@ public class MdbFile implements Cloneable {
         System.arraycopy(tmpbuf, 0, altPageBuffer, 0, PAGE_SIZE);
     }
 
-    /** */
+    @Deprecated
     int readByte(int offset) {
         int c = pageBuffer[offset] & 0xff;
         return c;
     }
 
-    /** */
+    @Deprecated
     int read16Bit(byte[] buffer, int offset) {
         int value = ((buffer[offset + 1] & 0xff) << 8) | (buffer[offset] & 0xff);
 //logger.log(Level.TRACE, "offset: " + StringUtil.toHex4(offset) + "(" + offset + "): " + StringUtil.toHex4(value) + "(" + value + ")");
         return value & 0xffff;
     }
 
-    /** */
+    @Deprecated
     int readShort(int offset) {
         int i = read16Bit(pageBuffer, offset);
 
         return i;
     }
 
-    /** */
+    @Deprecated
     int read24BitMsb(int offset) {
         int l = 0;
 
@@ -546,7 +546,7 @@ public class MdbFile implements Cloneable {
         return l;
     }
 
-    /** */
+    @Deprecated
     int read24Bit(int offset) {
         int l = 0;
 
@@ -558,7 +558,7 @@ public class MdbFile implements Cloneable {
         return l;
     }
 
-    /** */
+    @Deprecated
     int read32Bit(byte[] buffer, int offset) {
         long l = 0;
 
@@ -571,13 +571,14 @@ public class MdbFile implements Cloneable {
         return (int) (l & 0xffff_ffffL);
     }
 
-    /** */
+    @Deprecated
     int readInt(int offset) {
         int l = read32Bit(pageBuffer, offset);
         return l;
     }
 
     /** TODO */
+    @Deprecated
     float readFloat(int offset) {
         byte[] b = new byte[4];
         System.arraycopy(pageBuffer, offset, b, 0, 4);
@@ -598,6 +599,7 @@ public class MdbFile implements Cloneable {
     }
 
     /** TODO */
+    @Deprecated
     double readDouble(int offset) {
         byte[] b = new byte[8];
         System.arraycopy(pageBuffer, offset, b, 0, 8);
@@ -763,7 +765,7 @@ public class MdbFile implements Cloneable {
     // stats
 
     /** */
-    void stats_on() {
+    void setStatsOn() {
         if (stats == null) {
             stats = new Statistics();
         }
@@ -772,7 +774,7 @@ public class MdbFile implements Cloneable {
     }
 
     /** */
-    void stats_off() {
+    void setStatsOff() {
         if (stats == null) {
             return;
         }
@@ -781,7 +783,7 @@ public class MdbFile implements Cloneable {
     }
 
     /** */
-    void dump_stats() {
+    void dumpStats() {
         if (stats == null) {
             return;
         }

@@ -43,7 +43,7 @@ public interface Engine {
      */
     boolean execute(String sql, Map<Integer, Object> params) throws IOException;
 
-    /** */
+    /** the factory method for {@link Engine} */
     static Engine factory(String name) {
         for (Engine engine : ServiceLoader.load(Engine.class)) {
             if (name == null || engine.getClass().getName().equals(name)) {

@@ -6,11 +6,14 @@
 
 package vavi.sql.mdb.jdbc;
 
+import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
+
+import vavi.util.Debug;
 
 
 /**
@@ -20,6 +23,15 @@ import java.util.logging.Logger;
  * @version 0.00 040620 nsano initial version <br>
  */
 public class Driver implements java.sql.Driver {
+
+    // see https://blog.sgnet.co.jp/2020/03/java-jdbc.html
+    static {
+        try {
+            DriverManager.registerDriver(new Driver());
+        } catch(SQLException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     /** */
     static final int MAJOR_VERSION = 0;
