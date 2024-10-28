@@ -42,6 +42,7 @@ as a jdbc
    * details (metadata, implementation of operator)
 * memo: cut with 0 at the last?
 * currency: implement in java Currency
+  * https://github.com/JavaMoney 
 * fuzzing
    * https://github.com/mdbtools/mdbtools/tree/dev/src/fuzz
    * https://github.com/CodeIntelligenceTesting/jazzer
