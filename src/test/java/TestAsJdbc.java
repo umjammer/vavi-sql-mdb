@@ -27,7 +27,6 @@ public class TestAsJdbc {
 
     @BeforeAll
     public static void testVault() throws Exception {
-        DriverManager.registerDriver(new vavi.sql.mdb.jdbc.Driver());
         conn = DriverManager.getConnection("jdbc:mdb:" + "src/test/resources/nwind.mdb");
     }
 

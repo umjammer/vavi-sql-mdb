@@ -18,7 +18,6 @@ accessing Microsoft Access files directory and it's jdbc implementation (where c
 as a jdbc
 
 ```java
-    DriverManager.registerDriver(new vavi.sql.mdb.jdbc.Driver());
     conn = DriverManager.getConnection("jdbc:mdb:" + "foo/bar.mdb");
 ```
 
